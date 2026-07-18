@@ -1,0 +1,1 @@
+import { test, expect } from '@playwright/test';test('@smoke login page is accessible',async({page})=>{await page.goto('/login');await expect(page.getByRole('heading',{name:/login/i})).toBeVisible();});
