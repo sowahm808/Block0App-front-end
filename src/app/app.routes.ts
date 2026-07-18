@@ -3,8 +3,10 @@ import { ShellComponent } from './core/layout/shell.component';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { LandingPage } from './features/auth/landing.page';
 import { LoginPage, RegisterPage, SimpleAuthPage } from './features/auth/auth.pages';
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', component: LandingPage },
   { path: 'login', component: LoginPage, canActivate: [guestGuard] },
   { path: 'register', component: RegisterPage, canActivate: [guestGuard] },
   { path: 'forgot-password', component: SimpleAuthPage },
@@ -16,7 +18,6 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadChildren: () => import('./features/dashboard/routes') },
       { path: 'challenge', loadChildren: () => import('./features/challenge/routes') },
       { path: 'learning-packs', loadChildren: () => import('./features/learning-packs/routes') },
