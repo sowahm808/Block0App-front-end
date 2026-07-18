@@ -1,1 +1,11 @@
-import { Routes } from '@angular/router';import { guestGuard } from '../../core/guards/guest.guard';import { LoginPage, RegisterPage, SimpleAuthPage } from './auth.pages';export default [{path:'login',component:LoginPage,canActivate:[guestGuard]},{path:'register',component:RegisterPage,canActivate:[guestGuard]},{path:'forgot-password',component:SimpleAuthPage},{path:'reset-password',component:SimpleAuthPage},{path:'verify-email',component:SimpleAuthPage},{path:'unauthorized',component:SimpleAuthPage,data:{title:'Unauthorized'}}] satisfies Routes;
+import { Routes } from '@angular/router';
+import { guestGuard } from '../../core/guards/guest.guard';
+import { LoginPage, RegisterPage, SimpleAuthPage } from './auth.pages';
+export default [
+  { path: 'login', component: LoginPage, canActivate: [guestGuard] },
+  { path: 'register', component: RegisterPage, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: SimpleAuthPage },
+  { path: 'reset-password', component: SimpleAuthPage },
+  { path: 'verify-email', component: SimpleAuthPage },
+  { path: 'unauthorized', component: SimpleAuthPage, data: { title: 'Unauthorized' } },
+] satisfies Routes;

@@ -1,1 +1,8 @@
-import { inject } from '@angular/core';import { CanActivateFn, Router } from '@angular/router';import { AuthStore } from '../auth/auth.store';import { Permission } from '../models/roles';export const permissionGuard:CanActivateFn=(route)=>inject(AuthStore).hasPermission((route.data['permissions']??[]) as Permission[])?true:inject(Router).createUrlTree(['/unauthorized']);
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthStore } from '../auth/auth.store';
+import { Permission } from '../models/roles';
+export const permissionGuard: CanActivateFn = (route) =>
+  inject(AuthStore).hasPermission((route.data['permissions'] ?? []) as Permission[])
+    ? true
+    : inject(Router).createUrlTree(['/unauthorized']);

@@ -1,2 +1,15 @@
-import { FormControl } from '@angular/forms';import { describe, expect, it } from 'vitest';import { confidenceValidators, noteValidators } from '../../../shared/validators/check-in.validators';
-describe('check-in validation',()=>{it('requires confidence between 1 and 10',()=>{const c=new FormControl(11,confidenceValidators);expect(c.valid).toBe(false);c.setValue(8);expect(c.valid).toBe(true);});it('limits private notes',()=>{const c=new FormControl('x'.repeat(501),noteValidators);expect(c.valid).toBe(false);});});
+import { FormControl } from '@angular/forms';
+import { describe, expect, it } from 'vitest';
+import { confidenceValidators, noteValidators } from '../../../shared/validators/check-in.validators';
+describe('check-in validation', () => {
+  it('requires confidence between 1 and 10', () => {
+    const c = new FormControl(11, confidenceValidators);
+    expect(c.valid).toBe(false);
+    c.setValue(8);
+    expect(c.valid).toBe(true);
+  });
+  it('limits private notes', () => {
+    const c = new FormControl('x'.repeat(501), noteValidators);
+    expect(c.valid).toBe(false);
+  });
+});

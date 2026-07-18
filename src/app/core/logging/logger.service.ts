@@ -1,1 +1,13 @@
-import { Injectable } from '@angular/core';@Injectable({providedIn:'root'})export class LoggerService{error(message:string,error?:unknown){console.error(message,this.#safe(error));}info(message:string,props?:Record<string,unknown>){console.info(message,props??{});}#safe(e:unknown){return e instanceof Error?{name:e.name,message:e.message}:e;}}
+import { Injectable } from '@angular/core';
+@Injectable({ providedIn: 'root' })
+export class LoggerService {
+  error(message: string, error?: unknown) {
+    console.error(message, this.#safe(error));
+  }
+  info(message: string, props?: Record<string, unknown>) {
+    console.info(message, props ?? {});
+  }
+  #safe(e: unknown) {
+    return e instanceof Error ? { name: e.name, message: e.message } : e;
+  }
+}

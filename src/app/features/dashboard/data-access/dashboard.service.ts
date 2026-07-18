@@ -1,1 +1,10 @@
-import { Injectable, inject } from '@angular/core';import { ApiService } from '../../../core/api/api.service';import { DashboardDto } from '../../../core/api/api.types';@Injectable({providedIn:'root'})export class DashboardService{#api=inject(ApiService);getDashboard(){return this.#api.get<DashboardDto>('/dashboard');}}
+import { Injectable, inject } from '@angular/core';
+import { ApiService } from '../../../core/api/api.service';
+import { DashboardDto } from '../../../core/api/api.types';
+@Injectable({ providedIn: 'root' })
+export class DashboardService {
+  #api = inject(ApiService);
+  getDashboard() {
+    return this.#api.get<DashboardDto>('/dashboard');
+  }
+}
