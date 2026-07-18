@@ -1,3 +1,4 @@
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +6,8 @@ html,
 body {
   height: 100%;
   margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
   font-family: Roboto, Arial, sans-serif;
 }
 .skip-link {
