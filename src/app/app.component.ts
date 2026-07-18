@@ -1,1 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';import { RouterOutlet } from '@angular/router';@Component({selector:'b0-root',standalone:true,imports:[RouterOutlet],template:`<router-outlet />`,changeDetection:ChangeDetectionStrategy.OnPush})export class AppComponent{}
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+@Component({
+  selector: 'b0-root',
+  standalone: true,
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AppComponent {}

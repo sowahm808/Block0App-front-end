@@ -1,2 +1,58 @@
-import { Routes } from '@angular/router';import { ShellComponent } from './core/layout/shell.component';import { authGuard } from './core/guards/auth.guard';import { roleGuard } from './core/guards/role.guard';import { guestGuard } from './core/guards/guest.guard';import { LoginPage, RegisterPage, SimpleAuthPage } from './features/auth/auth.pages';
-export const routes:Routes=[{path:'login',component:LoginPage,canActivate:[guestGuard]},{path:'register',component:RegisterPage,canActivate:[guestGuard]},{path:'forgot-password',component:SimpleAuthPage},{path:'reset-password',component:SimpleAuthPage},{path:'verify-email',component:SimpleAuthPage},{path:'unauthorized',component:SimpleAuthPage},{path:'',component:ShellComponent,canActivate:[authGuard],children:[{path:'',pathMatch:'full',redirectTo:'dashboard'},{path:'dashboard',loadChildren:()=>import('./features/dashboard/routes')},{path:'challenge',loadChildren:()=>import('./features/challenge/routes')},{path:'learning-packs',loadChildren:()=>import('./features/learning-packs/routes')},{path:'capsules/:capsuleAttemptId',loadChildren:()=>import('./features/capsules/routes')},{path:'scenarios',loadChildren:()=>import('./features/scenarios/routes')},{path:'scenario-attempts/:attemptId',loadChildren:()=>import('./features/scenarios/routes')},{path:'rehearsal',loadChildren:()=>import('./features/rehearsal/routes')},{path:'check-ins',loadChildren:()=>import('./features/check-ins/routes')},{path:'team',loadChildren:()=>import('./features/teams/routes')},{path:'readiness',loadChildren:()=>import('./features/readiness/routes')},{path:'rewards',loadChildren:()=>import('./features/rewards/routes')},{path:'certificates',loadChildren:()=>import('./features/certificates/routes')},{path:'notifications',loadChildren:()=>import('./features/notifications/routes')},{path:'profile',loadChildren:()=>import('./features/profile/routes')},{path:'mentor',canActivate:[roleGuard],data:{roles:['Mentor']},loadChildren:()=>import('./features/mentor/routes')},{path:'review',canActivate:[roleGuard],data:{roles:['ContentReviewer']},loadChildren:()=>import('./features/content-review/routes')},{path:'admin',canActivate:[roleGuard],data:{roles:['Administrator','SuperAdministrator']},loadChildren:()=>import('./features/admin/routes')}]},{path:'**',loadComponent:()=>import('./shared/components/feature-page.component').then(m=>m.FeaturePageComponent)}];
+import { Routes } from '@angular/router';
+import { ShellComponent } from './core/layout/shell.component';
+import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
+import { guestGuard } from './core/guards/guest.guard';
+import { LoginPage, RegisterPage, SimpleAuthPage } from './features/auth/auth.pages';
+export const routes: Routes = [
+  { path: 'login', component: LoginPage, canActivate: [guestGuard] },
+  { path: 'register', component: RegisterPage, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: SimpleAuthPage },
+  { path: 'reset-password', component: SimpleAuthPage },
+  { path: 'verify-email', component: SimpleAuthPage },
+  { path: 'unauthorized', component: SimpleAuthPage },
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', loadChildren: () => import('./features/dashboard/routes') },
+      { path: 'challenge', loadChildren: () => import('./features/challenge/routes') },
+      { path: 'learning-packs', loadChildren: () => import('./features/learning-packs/routes') },
+      { path: 'capsules/:capsuleAttemptId', loadChildren: () => import('./features/capsules/routes') },
+      { path: 'scenarios', loadChildren: () => import('./features/scenarios/routes') },
+      { path: 'scenario-attempts/:attemptId', loadChildren: () => import('./features/scenarios/routes') },
+      { path: 'rehearsal', loadChildren: () => import('./features/rehearsal/routes') },
+      { path: 'check-ins', loadChildren: () => import('./features/check-ins/routes') },
+      { path: 'team', loadChildren: () => import('./features/teams/routes') },
+      { path: 'readiness', loadChildren: () => import('./features/readiness/routes') },
+      { path: 'rewards', loadChildren: () => import('./features/rewards/routes') },
+      { path: 'certificates', loadChildren: () => import('./features/certificates/routes') },
+      { path: 'notifications', loadChildren: () => import('./features/notifications/routes') },
+      { path: 'profile', loadChildren: () => import('./features/profile/routes') },
+      {
+        path: 'mentor',
+        canActivate: [roleGuard],
+        data: { roles: ['Mentor'] },
+        loadChildren: () => import('./features/mentor/routes'),
+      },
+      {
+        path: 'review',
+        canActivate: [roleGuard],
+        data: { roles: ['ContentReviewer'] },
+        loadChildren: () => import('./features/content-review/routes'),
+      },
+      {
+        path: 'admin',
+        canActivate: [roleGuard],
+        data: { roles: ['Administrator', 'SuperAdministrator'] },
+        loadChildren: () => import('./features/admin/routes'),
+      },
+    ],
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./shared/components/feature-page.component').then((m) => m.FeaturePageComponent),
+  },
+];

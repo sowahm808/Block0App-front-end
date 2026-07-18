@@ -1,2 +1,62 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';import { AsyncPipe } from '@angular/common';import { RouterLink } from '@angular/router';import { MatButtonModule } from '@angular/material/button';import { MatCardModule } from '@angular/material/card';import { MatProgressBarModule } from '@angular/material/progress-bar';import { catchError, of, startWith } from 'rxjs';import { DashboardService } from '../data-access/dashboard.service';
-@Component({standalone:true,imports:[AsyncPipe,RouterLink,MatButtonModule,MatCardModule,MatProgressBarModule],template:`<section class="grid gap-4" aria-labelledby="dash-title"><h1 id="dash-title" class="text-3xl font-bold">Scholar dashboard</h1>@if(vm$|async;as vm){@if(vm.loading){<p aria-live="polite">Loading dashboard…</p>}@else if(vm.error){<mat-card><h2>We could not load your dashboard</h2><p>Try again later. Correlation ID will be shown when provided by the API.</p></mat-card>}@else if(vm.data){<div class="grid gap-4 md:grid-cols-3"><mat-card><h2>Welcome, {{vm.data.scholarName}}</h2><p>{{vm.data.currentChallenge}} — Day {{vm.data.currentDay}}</p><p>Daily target: {{vm.data.dailyTarget}} capsules</p><a mat-raised-button color="primary" [routerLink]="vm.data.continueUrl">Continue study</a></mat-card><mat-card><h2>Today</h2><p>{{vm.data.questionsCompletedToday}} questions</p><p>{{vm.data.capsulesCompletedToday}} capsules</p><mat-progress-bar [value]="vm.data.overallCompletion" aria-label="Overall completion"></mat-progress-bar></mat-card><mat-card><h2>Readiness</h2><p>{{vm.data.readinessLevel}}</p><p>{{vm.data.raffleEntries}} raffle entries</p></mat-card></div><mat-card><h2>Announcements</h2><ul>@for(a of vm.data.announcements;track a){<li>{{a}}</li>}</ul></mat-card>}}</section>`,changeDetection:ChangeDetectionStrategy.OnPush})export class DashboardPage{#svc=inject(DashboardService);vm$=this.#svc.getDashboard().pipe(catchError(error=>of({error})),startWith({loading:true}));}
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { catchError, of, startWith } from 'rxjs';
+import { DashboardService } from '../data-access/dashboard.service';
+@Component({
+  standalone: true,
+  imports: [AsyncPipe, RouterLink, MatButtonModule, MatCardModule, MatProgressBarModule],
+  template: `<section class="grid gap-4" aria-labelledby="dash-title">
+    <h1 id="dash-title" class="text-3xl font-bold">Scholar dashboard</h1>
+    @if (vm$ | async; as vm) {
+      @if (vm.loading) {
+        <p aria-live="polite">Loading dashboard…</p>
+      } @else if (vm.error) {
+        <mat-card
+          ><h2>We could not load your dashboard</h2>
+          <p>Try again later. Correlation ID will be shown when provided by the API.</p></mat-card
+        >
+      } @else if (vm.data) {
+        <div class="grid gap-4 md:grid-cols-3">
+          <mat-card
+            ><h2>Welcome, {{ vm.data.scholarName }}</h2>
+            <p>{{ vm.data.currentChallenge }} — Day {{ vm.data.currentDay }}</p>
+            <p>Daily target: {{ vm.data.dailyTarget }} capsules</p>
+            <a mat-raised-button color="primary" [routerLink]="vm.data.continueUrl">Continue study</a></mat-card
+          ><mat-card
+            ><h2>Today</h2>
+            <p>{{ vm.data.questionsCompletedToday }} questions</p>
+            <p>{{ vm.data.capsulesCompletedToday }} capsules</p>
+            <mat-progress-bar
+              [value]="vm.data.overallCompletion"
+              aria-label="Overall completion"
+            ></mat-progress-bar></mat-card
+          ><mat-card
+            ><h2>Readiness</h2>
+            <p>{{ vm.data.readinessLevel }}</p>
+            <p>{{ vm.data.raffleEntries }} raffle entries</p></mat-card
+          >
+        </div>
+        <mat-card
+          ><h2>Announcements</h2>
+          <ul>
+            @for (a of vm.data.announcements; track a) {
+              <li>{{ a }}</li>
+            }
+          </ul></mat-card
+        >
+      }
+    }
+  </section>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class DashboardPage {
+  #svc = inject(DashboardService);
+  vm$ = this.#svc.getDashboard().pipe(
+    catchError((error) => of({ error })),
+    startWith({ loading: true }),
+  );
+}

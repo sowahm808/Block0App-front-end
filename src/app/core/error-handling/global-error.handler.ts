@@ -1,1 +1,9 @@
-import { ErrorHandler, Injectable, inject } from '@angular/core';import { LoggerService } from '../logging/logger.service';@Injectable()export class GlobalErrorHandler implements ErrorHandler{#logger=inject(LoggerService);handleError(error:unknown){this.#logger.error('Unhandled application error',error);}}
+import { ErrorHandler, Injectable, inject } from '@angular/core';
+import { LoggerService } from '../logging/logger.service';
+@Injectable()
+export class GlobalErrorHandler implements ErrorHandler {
+  #logger = inject(LoggerService);
+  handleError(error: unknown) {
+    this.#logger.error('Unhandled application error', error);
+  }
+}
