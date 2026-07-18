@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { catchError, of, startWith } from 'rxjs';
+import { catchError, map, of, startWith } from 'rxjs';
 import { DashboardService } from '../data-access/dashboard.service';
 @Component({
   standalone: true,
@@ -56,7 +56,8 @@ import { DashboardService } from '../data-access/dashboard.service';
 export class DashboardPage {
   #svc = inject(DashboardService);
   vm$ = this.#svc.getDashboard().pipe(
-    catchError((error) => of({ error })),
-    startWith({ loading: true }),
+    map((data) => ({ data, error: null, loading: false })),
+    catchError((error) => of({ data: null, error, loading: false })),
+    startWith({ data: null, error: null, loading: true }),
   );
 }
