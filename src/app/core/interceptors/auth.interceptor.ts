@@ -15,7 +15,7 @@ export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) 
   if (same && store.accessToken())
     cloned = cloned.clone({
       setHeaders: { Authorization: `Bearer ${store.accessToken()}` },
-      withCredentials: new URL(environment.apiBaseUrl, location.origin).origin === location.origin,
+      withCredentials: environment.apiWithCredentials,
     });
   return next(cloned).pipe(
     catchError((e: unknown) => {

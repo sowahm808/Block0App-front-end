@@ -13,7 +13,7 @@ Production Angular frontend for the structured medical exam preparation challeng
 
 ## API configuration
 
-Set `src/app/environments/environment*.ts` values. Services must use `environment.apiBaseUrl`; no service should hard-code backend URLs.
+Set `src/app/environments/environment*.ts` values. Services must use `environment.apiBaseUrl`; no service should hard-code backend URLs. Production currently targets `https://block0app-back-end.onrender.com/api` and enables `apiWithCredentials` so HttpOnly auth cookies can be sent to the API origin.
 
 ## Security principles
 
