@@ -8,28 +8,24 @@ export class ApiService {
   get<T>(path: string, params?: Record<string, string | number | boolean>) {
     return this.#http.get<T>(`${this.#base}${path}`, {
       params: this.#params(params),
-      withCredentials: this.#sameOrigin(),
+      withCredentials: this.#withCredentials(),
     });
   }
   post<T>(path: string, body: unknown) {
-    return this.#http.post<T>(`${this.#base}${path}`, body, { withCredentials: this.#sameOrigin() });
+    return this.#http.post<T>(`${this.#base}${path}`, body, { withCredentials: this.#withCredentials() });
   }
   put<T>(path: string, body: unknown) {
-    return this.#http.put<T>(`${this.#base}${path}`, body, { withCredentials: this.#sameOrigin() });
+    return this.#http.put<T>(`${this.#base}${path}`, body, { withCredentials: this.#withCredentials() });
   }
   delete<T>(path: string) {
-    return this.#http.delete<T>(`${this.#base}${path}`, { withCredentials: this.#sameOrigin() });
+    return this.#http.delete<T>(`${this.#base}${path}`, { withCredentials: this.#withCredentials() });
   }
   #params(p?: Record<string, string | number | boolean>) {
     let params = new HttpParams();
     Object.entries(p ?? {}).forEach(([k, v]) => (params = params.set(k, String(v))));
     return params;
   }
-  #sameOrigin() {
-    try {
-      return new URL(this.#base, location.origin).origin === location.origin;
-    } catch {
-      return false;
-    }
+  #withCredentials() {
+    return environment.apiWithCredentials;
   }
 }
