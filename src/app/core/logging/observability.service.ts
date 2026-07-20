@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import { environment } from '../../environments/environment';
+import { environment } from '../../../environments/environment';
 import { LoggerService } from './logger.service';
 @Injectable({ providedIn: 'root' })
 export class ObservabilityService {

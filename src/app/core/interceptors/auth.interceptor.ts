@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpHandlerFn, HttpRequest } from '@angular/common/h
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { AuthStore } from '../auth/auth.store';
 export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) {
