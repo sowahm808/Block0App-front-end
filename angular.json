@@ -15,28 +15,55 @@
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "assets": [{ "glob": "**/*", "input": "public" }],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
             "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
-              "budgets": [{ "type": "initial", "maximumWarning": "600kb", "maximumError": "1mb" }],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "600kb",
+                  "maximumError": "1mb"
+                }
+              ],
               "outputHashing": "all",
               "optimization": true
             }
-          }
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "block0-app:build:production" },
-            "development": { "buildTarget": "block0-app:build" }
+            "production": {
+              "buildTarget": "block0-app:build:production"
+            },
+            "development": {
+              "buildTarget": "block0-app:build"
+            }
           },
           "defaultConfiguration": "development"
         },
-        "test": { "builder": "@angular-devkit/build-angular:karma", "options": {} }
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {}
+        }
       }
     }
   },
-  "cli": { "analytics": false }
+  "cli": {
+    "analytics": false
+  }
 }
