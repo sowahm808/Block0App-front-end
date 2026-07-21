@@ -1,16 +1,12 @@
 export type UserRole = 'Scholar' | 'Mentor' | 'ContentReviewer' | 'Administrator' | 'SuperAdministrator';
-export type Permission =
-  | 'dashboard:view'
-  | 'study:write'
-  | 'team:view'
-  | 'mentor:view'
-  | 'content:review'
-  | 'admin:manage'
-  | 'certificate:download';
+export type Permission = string;
+
 export interface CurrentUser {
-  id: string;
-  displayName: string;
+  userId: string;
   email: string;
-  roles: UserRole[];
+  displayName: string;
   permissions: Permission[];
+  emailVerified: boolean;
+  mfaEnabled: boolean;
+  roles?: UserRole[];
 }

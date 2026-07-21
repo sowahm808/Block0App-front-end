@@ -108,7 +108,7 @@ export class RegisterPage {
 
     this.busy.set(true);
     this.#auth.register(this.form.getRawValue()).subscribe({
-      next: () => void this.#router.navigateByUrl('/dashboard'),
+      next: () => void this.#router.navigateByUrl('/login'),
       error: () => {
         this.busy.set(false);
         this.errorMessage.set('We could not create your account. Please check your details and try again.');

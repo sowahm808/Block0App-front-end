@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AuthService } from './core/auth/auth.service';
+import { AuthStore } from './core/auth/auth.store';
+
 @Component({
   selector: 'b0-root',
   standalone: true,
@@ -7,4 +10,13 @@ import { RouterOutlet } from '@angular/router';
   template: `<router-outlet />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+  #auth = inject(AuthService);
+  #store = inject(AuthStore);
+
+  ngOnInit() {
+    if (this.#store.accessToken() && !this.#store.user()) {
+      this.#auth.loadProfile().subscribe({ error: () => this.#store.clear() });
+    }
+  }
+}

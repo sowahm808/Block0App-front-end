@@ -1,3 +1,5 @@
+import { CurrentUser } from '../models/roles';
+
 export interface ApiError {
   status: number;
   message: string;
@@ -7,26 +9,32 @@ export interface ApiError {
 export interface LoginCredentials {
   email: string;
   password: string;
+  mfaCode?: string;
 }
 export interface LoginRequest {
   email: string;
-  firebaseIdToken: string;
+  password?: string;
+  mfaCode?: string;
+  firebaseIdToken?: string;
 }
 export interface RegisterRequest {
   displayName: string;
   email: string;
   password: string;
 }
-export interface BackendRegisterRequest {
-  displayName: string;
+export interface RegisterResponse {
+  userId: string;
   email: string;
-  firebaseIdToken: string;
+  emailVerificationLink: string;
 }
-export interface AuthResponse {
+export interface TokenResponse {
   accessToken: string;
-  expiresAt: string;
-  user: import('../models/roles').CurrentUser;
+  expiresUtc: string;
+  refreshToken: string;
+  refreshExpiresUtc: string;
+  tokenType: string;
 }
+export type CurrentUserResponse = CurrentUser;
 export interface DashboardDto {
   scholarName: string;
   currentChallenge: string;
