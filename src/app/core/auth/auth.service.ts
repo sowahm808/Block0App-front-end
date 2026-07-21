@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { catchError, finalize, map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
+import { finalize, map, Observable, shareReplay, switchMap, tap, throwError } from 'rxjs';
 import { ApiService } from '../api/api.service';
 import {
   CurrentUserResponse,
@@ -24,8 +24,6 @@ export class AuthService {
       switchMap((firebaseIdToken) => {
         const loginRequest: LoginRequest = {
           email: req.email,
-          password: req.password,
-          mfaCode: req.mfaCode,
           firebaseIdToken,
         };
 
@@ -53,8 +51,8 @@ export class AuthService {
     return this.#api.post<void>('/auth/reset-password', { token, password });
   }
 
-  verifyEmail(token: string) {
-    return this.#api.post<void>('/auth/verify-email', { token });
+  verifyEmail(email: string, token: string) {
+    return this.#api.post<void>('/auth/verify-email', { email, token });
   }
 
   loadProfile() {
@@ -63,8 +61,13 @@ export class AuthService {
 
   refreshToken() {
     if (!this.#refresh$) {
-      this.#refresh$ = this.#firebase.refreshIdToken().pipe(
-        switchMap((firebaseIdToken) => this.#api.post<TokenResponse>('/auth/refresh', { firebaseIdToken })),
+      const refreshToken = this.#store.refreshToken();
+
+      if (!refreshToken) {
+        return throwError(() => new Error('No backend refresh token is available.'));
+      }
+
+      this.#refresh$ = this.#api.post<TokenResponse>('/auth/refresh', { refreshToken }).pipe(
         switchMap((r) => this.#setBackendTokens(r)),
         shareReplay(1),
         finalize(() => (this.#refresh$ = undefined)),
@@ -74,11 +77,9 @@ export class AuthService {
   }
 
   #setBackendTokens(response: TokenResponse) {
-    return this.#firebase.normalizeBackendToken(response.accessToken).pipe(
-      catchError(() => of(response.accessToken)),
-      tap((idToken) => this.#store.setAccessToken(idToken)),
-      switchMap(() => this.loadProfile()),
-      map(() => response),
-    );
+    this.#store.setAccessToken(response.accessToken);
+    this.#store.setRefreshToken(response.refreshToken);
+
+    return this.loadProfile().pipe(map(() => response));
   }
 }
