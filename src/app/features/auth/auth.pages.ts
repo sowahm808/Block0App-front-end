@@ -1,24 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import {
-  ActivatedRoute,
-  Router,
-  RouterLink,
-} from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -35,96 +24,83 @@ import { AuthService } from '../../core/auth/auth.service';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
   ],
   template: `
-    <mat-card class="mx-auto max-w-md">
-      <mat-card-title>Login</mat-card-title>
-
-      <mat-card-content>
-        <form
-          [formGroup]="form"
-          (ngSubmit)="submit()"
-          class="grid gap-3"
-          novalidate
+    <main class="auth-shell">
+      <mat-card class="auth-card"
+        ><mat-card-header
+          ><mat-card-title>Welcome back</mat-card-title
+          ><mat-card-subtitle>Sign in to continue your guided practice.</mat-card-subtitle></mat-card-header
         >
-          @if (successMessage()) {
-            <p
-              class="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700"
-              role="status"
-            >
-              {{ successMessage() }}
-            </p>
-          }
 
-          @if (errorMessage()) {
-            <p
-              class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-              role="alert"
-            >
-              {{ errorMessage() }}
-            </p>
-          }
-
-          <mat-form-field>
-            <mat-label>Email</mat-label>
-
-            <input
-              matInput
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-            />
-
-            @if (
-              form.controls.email.touched &&
-              form.controls.email.hasError('required')
-            ) {
-              <mat-error>Email is required.</mat-error>
-            } @else if (
-              form.controls.email.touched &&
-              form.controls.email.hasError('email')
-            ) {
-              <mat-error>Enter a valid email address.</mat-error>
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3" novalidate>
+            @if (successMessage()) {
+              <p class="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700" role="status">
+                {{ successMessage() }}
+              </p>
             }
-          </mat-form-field>
 
-          <mat-form-field>
-            <mat-label>Password</mat-label>
-
-            <input
-              matInput
-              type="password"
-              formControlName="password"
-              autocomplete="current-password"
-            />
-
-            @if (
-              form.controls.password.touched &&
-              form.controls.password.hasError('required')
-            ) {
-              <mat-error>Password is required.</mat-error>
+            @if (errorMessage()) {
+              <p class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {{ errorMessage() }}
+              </p>
             }
-          </mat-form-field>
 
-          <button
-            mat-raised-button
-            color="primary"
-            type="submit"
-            [disabled]="form.invalid || busy()"
-          >
-            {{ busy() ? 'Signing in…' : 'Login' }}
-          </button>
+            <mat-form-field>
+              <mat-label>Email</mat-label>
 
-          @if (emailVerificationRequired()) {
-            <p class="text-sm">
-              Check your inbox and spam folder for the verification email.
-            </p>
-          }
+              <input matInput type="email" formControlName="email" autocomplete="email" />
 
-          <a routerLink="/forgot-password">Forgot password?</a>
-        </form>
-      </mat-card-content>
-    </mat-card>
+              @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+                <mat-error>Email is required.</mat-error>
+              } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+                <mat-error>Enter a valid email address.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Password</mat-label>
+
+              <input
+                matInput
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="current-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+
+              @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+                <mat-error>Password is required.</mat-error>
+              }
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
+              @if (busy()) {
+                <mat-progress-spinner mode="indeterminate" diameter="18" />
+              }
+              {{ busy() ? 'Signing in…' : 'Login' }}
+            </button>
+
+            @if (emailVerificationRequired()) {
+              <p class="text-sm">Check your inbox and spam folder for the verification email.</p>
+            }
+
+            <a routerLink="/forgot-password">Forgot password?</a>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -138,6 +114,7 @@ export class LoginPage {
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly emailVerificationRequired = signal(false);
+  readonly showPassword = signal(false);
 
   readonly form = this.#fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -145,11 +122,9 @@ export class LoginPage {
   });
 
   constructor() {
-    const registered =
-      this.#route.snapshot.queryParamMap.get('registered');
+    const registered = this.#route.snapshot.queryParamMap.get('registered');
 
-    const email =
-      this.#route.snapshot.queryParamMap.get('email');
+    const email = this.#route.snapshot.queryParamMap.get('email');
 
     if (email) {
       this.form.controls.email.setValue(email);
@@ -160,6 +135,10 @@ export class LoginPage {
         'Your account was created. Check your inbox and spam folder, verify your email, then sign in.',
       );
     }
+  }
+
+  togglePassword(): void {
+    this.showPassword.update((value) => !value);
   }
 
   submit(): void {
@@ -193,9 +172,7 @@ export class LoginPage {
           const result = buildLoginErrorMessage(error);
 
           this.errorMessage.set(result.message);
-          this.emailVerificationRequired.set(
-            result.emailVerificationRequired,
-          );
+          this.emailVerificationRequired.set(result.emailVerificationRequired);
         },
       });
   }
@@ -214,116 +191,87 @@ export class LoginPage {
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
   ],
   template: `
-    <mat-card class="mx-auto max-w-md">
-      <mat-card-title>Register</mat-card-title>
-
-      <mat-card-content>
-        <form
-          [formGroup]="form"
-          (ngSubmit)="submit()"
-          class="grid gap-3"
-          novalidate
+    <main class="auth-shell">
+      <mat-card class="auth-card"
+        ><mat-card-header
+          ><mat-card-title>Create your account</mat-card-title
+          ><mat-card-subtitle>Use your learning email and a strong password.</mat-card-subtitle></mat-card-header
         >
-          @if (errorMessage()) {
-            <p
-              class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-              role="alert"
-            >
-              {{ errorMessage() }}
-            </p>
-          }
 
-          <mat-form-field>
-            <mat-label>Name</mat-label>
-
-            <input
-              matInput
-              formControlName="displayName"
-              autocomplete="name"
-            />
-
-            @if (
-              form.controls.displayName.touched &&
-              (
-                form.controls.displayName.hasError('required') ||
-                form.controls.displayName.hasError('pattern')
-              )
-            ) {
-              <mat-error>Name is required.</mat-error>
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3" novalidate>
+            @if (errorMessage()) {
+              <p class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {{ errorMessage() }}
+              </p>
             }
-          </mat-form-field>
 
-          <mat-form-field>
-            <mat-label>Email</mat-label>
+            <mat-form-field>
+              <mat-label>Name</mat-label>
 
-            <input
-              matInput
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-            />
+              <input matInput formControlName="displayName" autocomplete="name" />
 
-            @if (
-              form.controls.email.touched &&
-              form.controls.email.hasError('required')
-            ) {
-              <mat-error>Email is required.</mat-error>
-            } @else if (
-              form.controls.email.touched &&
-              form.controls.email.hasError('email')
-            ) {
-              <mat-error>Enter a valid email address.</mat-error>
-            }
-          </mat-form-field>
+              @if (
+                form.controls.displayName.touched &&
+                (form.controls.displayName.hasError('required') || form.controls.displayName.hasError('pattern'))
+              ) {
+                <mat-error>Name is required.</mat-error>
+              }
+            </mat-form-field>
 
-          <mat-form-field>
-            <mat-label>Password</mat-label>
+            <mat-form-field>
+              <mat-label>Email</mat-label>
 
-            <input
-              matInput
-              type="password"
-              formControlName="password"
-              autocomplete="new-password"
-            />
+              <input matInput type="email" formControlName="email" autocomplete="email" />
 
-            <mat-hint>Use at least 12 characters.</mat-hint>
+              @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+                <mat-error>Email is required.</mat-error>
+              } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+                <mat-error>Enter a valid email address.</mat-error>
+              }
+            </mat-form-field>
 
-            @if (
-              form.controls.password.touched &&
-              form.controls.password.hasError('required')
-            ) {
-              <mat-error>Password is required.</mat-error>
-            } @else if (
-              form.controls.password.touched &&
-              form.controls.password.hasError('minlength')
-            ) {
-              <mat-error>
-                Password must be at least 12 characters.
-              </mat-error>
-            }
-          </mat-form-field>
+            <mat-form-field>
+              <mat-label>Password</mat-label>
 
-          <button
-            mat-raised-button
-            color="primary"
-            type="submit"
-            [disabled]="form.invalid || busy()"
-          >
-            {{
-              busy()
-                ? 'Creating account…'
-                : 'Create account'
-            }}
-          </button>
+              <input
+                matInput
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
 
-          <a routerLink="/login">
-            Already have an account? Sign in
-          </a>
-        </form>
-      </mat-card-content>
-    </mat-card>
+              <mat-hint>Use at least 12 characters.</mat-hint>
+
+              @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+                <mat-error>Password is required.</mat-error>
+              } @else if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+                <mat-error> Password must be at least 12 characters. </mat-error>
+              }
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
+              {{ busy() ? 'Creating account…' : 'Create account' }}
+            </button>
+
+            <a routerLink="/login"> Already have an account? Sign in </a>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -334,30 +282,17 @@ export class RegisterPage {
 
   readonly busy = signal(false);
   readonly errorMessage = signal('');
+  readonly showPassword = signal(false);
 
   readonly form = this.#fb.nonNullable.group({
-    displayName: [
-      '',
-      [
-        Validators.required,
-        Validators.pattern(/\S/),
-      ],
-    ],
-    email: [
-      '',
-      [
-        Validators.required,
-        Validators.email,
-      ],
-    ],
-    password: [
-      '',
-      [
-        Validators.required,
-        Validators.minLength(12),
-      ],
-    ],
+    displayName: ['', [Validators.required, Validators.pattern(/\S/)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(12)]],
   });
+
+  togglePassword(): void {
+    this.showPassword.update((value) => !value);
+  }
 
   submit(): void {
     this.errorMessage.set('');
@@ -369,14 +304,9 @@ export class RegisterPage {
 
     this.busy.set(true);
 
-    const {
-      displayName,
-      email,
-      password,
-    } = this.form.getRawValue();
+    const { displayName, email, password } = this.form.getRawValue();
 
-    const normalizedEmail =
-      email.trim().toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
 
     this.#auth
       .register({
@@ -399,9 +329,7 @@ export class RegisterPage {
         error: (error: unknown) => {
           this.busy.set(false);
 
-          this.errorMessage.set(
-            buildRegistrationErrorMessage(error),
-          );
+          this.errorMessage.set(buildRegistrationErrorMessage(error));
         },
       });
   }
@@ -415,9 +343,7 @@ export class RegisterPage {
   standalone: true,
   template: `
     <h1>{{ title }}</h1>
-    <p>
-      Use the secure email flow from the backend to continue.
-    </p>
+    <p>Use the secure email flow from the backend to continue.</p>
   `,
 })
 export class SimpleAuthPage {
@@ -446,12 +372,9 @@ interface LoginErrorResult {
 // Login error handling
 // ============================================================
 
-export function buildLoginErrorMessage(
-  error: unknown,
-): LoginErrorResult {
+export function buildLoginErrorMessage(error: unknown): LoginErrorResult {
   const fallback: LoginErrorResult = {
-    message:
-      'We could not sign you in. Check your email and password and try again.',
+    message: 'We could not sign you in. Check your email and password and try again.',
     emailVerificationRequired: false,
   };
 
@@ -459,28 +382,21 @@ export function buildLoginErrorMessage(
     return fallback;
   }
 
-  const problem =
-    error.error as ProblemDetails | null;
+  const problem = error.error as ProblemDetails | null;
 
   const detail = problem?.detail?.trim();
   const title = problem?.title?.trim();
 
-  const combinedMessage =
-    `${detail ?? ''} ${title ?? ''}`.toLowerCase();
+  const combinedMessage = `${detail ?? ''} ${title ?? ''}`.toLowerCase();
 
-  const supportReference = problem?.traceId
-    ? ` Reference: ${problem.traceId}.`
-    : '';
+  const supportReference = problem?.traceId ? ` Reference: ${problem.traceId}.` : '';
 
   const requiresVerification =
     combinedMessage.includes('email verification') ||
     combinedMessage.includes('verify your email') ||
     combinedMessage.includes('email is not verified');
 
-  if (
-    (error.status === 401 || error.status === 403) &&
-    requiresVerification
-  ) {
+  if ((error.status === 401 || error.status === 403) && requiresVerification) {
     return {
       message:
         'Your email address has not been verified. Check your inbox and spam folder, verify your email, then sign in again.' +
@@ -491,57 +407,41 @@ export function buildLoginErrorMessage(
 
   if (error.status === 400) {
     return {
-      message:
-        detail ||
-        title ||
-        `The login request was invalid.${supportReference}`,
+      message: detail || title || `The login request was invalid.${supportReference}`,
       emailVerificationRequired: false,
     };
   }
 
   if (error.status === 401) {
     return {
-      message:
-        `The email or password is incorrect.${supportReference}`,
+      message: `The email or password is incorrect.${supportReference}`,
       emailVerificationRequired: false,
     };
   }
 
   if (error.status === 403) {
     return {
-      message:
-        (detail ||
-          title ||
-          'You do not have permission to access this account.') +
-        supportReference,
+      message: (detail || title || 'You do not have permission to access this account.') + supportReference,
       emailVerificationRequired: false,
     };
   }
 
   if (error.status === 429) {
     return {
-      message:
-        'Too many login attempts. Wait a few minutes and try again.' +
-        supportReference,
+      message: 'Too many login attempts. Wait a few minutes and try again.' + supportReference,
       emailVerificationRequired: false,
     };
   }
 
   if (error.status >= 500) {
     return {
-      message:
-        'The login service is temporarily unavailable. Please try again in a few minutes.' +
-        supportReference,
+      message: 'The login service is temporarily unavailable. Please try again in a few minutes.' + supportReference,
       emailVerificationRequired: false,
     };
   }
 
   return {
-    message:
-      (detail ||
-        title ||
-        fallback.message) +
-      supportReference,
+    message: (detail || title || fallback.message) + supportReference,
     emailVerificationRequired: false,
   };
 }
@@ -550,55 +450,31 @@ export function buildLoginErrorMessage(
 // Registration error handling
 // ============================================================
 
-export function buildRegistrationErrorMessage(
-  error: unknown,
-): string {
+export function buildRegistrationErrorMessage(error: unknown): string {
   if (!(error instanceof HttpErrorResponse)) {
-    return (
-      'We could not create your account. ' +
-      'Please check your details and try again.'
-    );
+    return 'We could not create your account. ' + 'Please check your details and try again.';
   }
 
-  const problem =
-    error.error as ProblemDetails | null;
+  const problem = error.error as ProblemDetails | null;
 
-  const validationError = problem?.errors
-    ? Object.values(problem.errors)
-        .flat()
-        .find(Boolean)
-    : undefined;
+  const validationError = problem?.errors ? Object.values(problem.errors).flat().find(Boolean) : undefined;
 
-  const backendMessage =
-    validationError ??
-    problem?.detail ??
-    problem?.title;
+  const backendMessage = validationError ?? problem?.detail ?? problem?.title;
 
-  const supportReference = problem?.traceId
-    ? ` Reference: ${problem.traceId}.`
-    : '';
+  const supportReference = problem?.traceId ? ` Reference: ${problem.traceId}.` : '';
 
-  const normalizedMessage =
-    backendMessage?.toLowerCase() ?? '';
+  const normalizedMessage = backendMessage?.toLowerCase() ?? '';
 
   if (
     error.status === 409 ||
     normalizedMessage.includes('already exists') ||
     normalizedMessage.includes('email_exists')
   ) {
-    return (
-      'An account already exists with this email address. ' +
-      'Sign in or reset your password.' +
-      supportReference
-    );
+    return 'An account already exists with this email address. ' + 'Sign in or reset your password.' + supportReference;
   }
 
   if (error.status === 429) {
-    return (
-      'Too many registration attempts. ' +
-      'Wait a few minutes and try again.' +
-      supportReference
-    );
+    return 'Too many registration attempts. ' + 'Wait a few minutes and try again.' + supportReference;
   }
 
   if (error.status >= 500) {
@@ -613,9 +489,5 @@ export function buildRegistrationErrorMessage(
     return `${backendMessage}${supportReference}`;
   }
 
-  return (
-    'We could not create your account. ' +
-    'Please check your details and try again.' +
-    supportReference
-  );
+  return 'We could not create your account. ' + 'Please check your details and try again.' + supportReference;
 }

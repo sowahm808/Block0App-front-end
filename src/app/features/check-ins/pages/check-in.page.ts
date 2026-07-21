@@ -7,6 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { confidenceValidators, noteValidators } from '../../../shared/validators/check-in.validators';
 import { CheckInsApiService } from '../../../core/api/feature-api.services';
+import { ToastService } from '../../../core/feedback/toast.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { FormFieldErrorComponent } from '../../../shared/ui/form-field-error/form-field-error.component';
 @Component({
   standalone: true,
   imports: [
@@ -16,34 +19,64 @@ import { CheckInsApiService } from '../../../core/api/feature-api.services';
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule,
+    PageHeaderComponent,
+    FormFieldErrorComponent,
   ],
-  template: `<mat-card class="max-w-2xl"
-    ><h1>{{ kind() === 'morning' ? 'Morning' : 'Evening' }} check-in</h1>
-    <form [formGroup]="form" class="grid gap-3" (ngSubmit)="submit()">
-      <mat-form-field
-        ><mat-label>Confidence 1–10</mat-label
-        ><input matInput type="number" formControlName="confidence" /></mat-form-field
-      ><mat-form-field
-        ><mat-label>{{ goalLabel() }}</mat-label
-        ><input matInput type="number" formControlName="goal" /></mat-form-field
-      ><mat-slide-toggle formControlName="needSupport">Need support</mat-slide-toggle
-      ><mat-form-field
-        ><mat-label>Notes</mat-label><textarea matInput maxlength="500" formControlName="note"></textarea>
-      </mat-form-field>
-      @if (message()) {
-        <p class="rounded-2xl bg-indigo-50 p-3 text-sm font-bold text-indigo-700" role="status">{{ message() }}</p>
-      }
-      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
-        {{ busy() ? 'Submitting…' : 'Submit check-in' }}
-      </button>
-    </form></mat-card
-  >`,
+  template: `<section class="grid max-w-3xl gap-5">
+    <b0-page-header
+      [title]="(kind() === 'morning' ? 'Morning' : 'Evening') + ' check-in'"
+      [description]="'Share only the progress signals needed to support your plan.'"
+      eyebrow="Daily habit"
+    />
+    <mat-card class="p-4 sm:p-6">
+      <form [formGroup]="form" class="grid gap-4 sm:grid-cols-2" (ngSubmit)="submit()" novalidate>
+        <mat-form-field
+          ><mat-label>Confidence 1–10</mat-label
+          ><input matInput type="number" min="1" max="10" formControlName="confidence" inputmode="numeric" /><mat-hint
+            >How prepared do you feel?</mat-hint
+          ><b0-form-field-error [control]="form.controls.confidence" label="Confidence"
+        /></mat-form-field>
+        <mat-form-field
+          ><mat-label>{{ goalLabel() }}</mat-label
+          ><input
+            matInput
+            type="number"
+            min="0"
+            max="100"
+            formControlName="goal"
+            inputmode="numeric" /><b0-form-field-error [control]="form.controls.goal" label="Goal"
+        /></mat-form-field>
+        <mat-slide-toggle class="sm:col-span-2" formControlName="needSupport"
+          >Need support from my team</mat-slide-toggle
+        >
+        <mat-form-field class="sm:col-span-2"
+          ><mat-label>Notes</mat-label><textarea matInput maxlength="500" rows="4" formControlName="note"></textarea
+          ><mat-hint align="end">{{ form.controls.note.value.length }}/500</mat-hint
+          ><b0-form-field-error [control]="form.controls.note" label="Notes"
+        /></mat-form-field>
+        @if (message()) {
+          <p
+            class="sm:col-span-2 rounded-2xl border border-[var(--b0-border)] bg-[var(--b0-surface)] p-3 text-sm font-bold"
+            role="status"
+          >
+            {{ message() }}
+          </p>
+        }
+        <div class="sm:col-span-2 flex justify-end">
+          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
+            {{ busy() ? 'Submitting…' : 'Submit check-in' }}
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckInPage {
   kind = input<'morning' | 'evening'>('morning');
   #fb = inject(FormBuilder);
   #api = inject(CheckInsApiService);
+  #toast = inject(ToastService);
   busy = signal(false);
   message = signal('');
   goalLabel = computed(() => (this.kind() === 'morning' ? 'Today’s capsule goal' : 'Tomorrow’s goal'));
@@ -65,10 +98,12 @@ export class CheckInPage {
       next: () => {
         this.busy.set(false);
         this.message.set('Check-in submitted.');
+        this.#toast.success('Check-in submitted.');
       },
       error: () => {
         this.busy.set(false);
         this.message.set('Could not submit yet. Confirm the API is available and try again.');
+        this.#toast.error('Could not submit check-in.');
       },
     });
   }
