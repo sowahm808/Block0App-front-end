@@ -9,5 +9,5 @@
 - [x] Added program navigation so students can open the roadmap from the app shell.
 
 ## Remaining
-- [ ] Connect the roadmap to live backend completion status when API fields are available.
-- [ ] Add per-student scheduled exam reminder controls once notification scheduling endpoints are available.
+- [x] Connect the roadmap to live backend completion status when API fields are available.
+- [x] Add per-student scheduled exam reminder controls once notification scheduling endpoints are available.
