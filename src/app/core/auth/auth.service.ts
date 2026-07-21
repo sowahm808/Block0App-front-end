@@ -1,25 +1,27 @@
 import { inject, Injectable } from '@angular/core';
-import { finalize, Observable, shareReplay, tap } from 'rxjs';
+import { catchError, finalize, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { ApiService } from '../api/api.service';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../api/api.types';
+import { AuthResponse, LoginCredentials, RegisterRequest } from '../api/api.types';
 import { AuthStore } from './auth.store';
+import { FirebaseAuthService } from './firebase-auth.service';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   #api = inject(ApiService);
+  #firebase = inject(FirebaseAuthService);
   #store = inject(AuthStore);
   #refresh$?: Observable<AuthResponse>;
-  login(req: LoginRequest) {
-    return this.#api
-      .post<AuthResponse>('/auth/login', req)
-      .pipe(tap((r) => this.#store.setSession(r.accessToken, r.user)));
+  login(req: LoginCredentials) {
+    return this.#firebase.signInWithPassword(req.email, req.password).pipe(
+      switchMap((firebaseIdToken) => this.#api.post<AuthResponse>('/auth/login', { firebaseIdToken })),
+      switchMap((r) => this.#setBackendSession(r)),
+    );
   }
   register(req: RegisterRequest) {
-    return this.#api
-      .post<AuthResponse>('/auth/register', req)
-      .pipe(tap((r) => this.#store.setSession(r.accessToken, r.user)));
+    return this.#api.post<AuthResponse>('/auth/register', req).pipe(switchMap((r) => this.#setBackendSession(r)));
   }
   logout() {
     this.#store.clear();
+    this.#firebase.clear();
     return this.#api.post<void>('/auth/logout', {});
   }
   forgotPassword(email: string) {
@@ -32,16 +34,25 @@ export class AuthService {
     return this.#api.post<void>('/auth/verify-email', { token });
   }
   loadProfile() {
-    return this.#api.get<AuthResponse>('/auth/me').pipe(tap((r) => this.#store.setSession(r.accessToken, r.user)));
+    return this.#api.get<AuthResponse>('/auth/me').pipe(switchMap((r) => this.#setBackendSession(r)));
   }
   refreshToken() {
     if (!this.#refresh$) {
-      this.#refresh$ = this.#api.post<AuthResponse>('/auth/refresh', {}).pipe(
-        tap((r) => this.#store.setSession(r.accessToken, r.user)),
+      this.#refresh$ = this.#firebase.refreshIdToken().pipe(
+        switchMap((firebaseIdToken) => this.#api.post<AuthResponse>('/auth/refresh', { firebaseIdToken })),
+        switchMap((r) => this.#setBackendSession(r)),
         shareReplay(1),
         finalize(() => (this.#refresh$ = undefined)),
       );
     }
     return this.#refresh$;
+  }
+
+  #setBackendSession(response: AuthResponse) {
+    return this.#firebase.normalizeBackendToken(response.accessToken).pipe(
+      catchError(() => of(response.accessToken)),
+      tap((idToken) => this.#store.setSession(idToken, response.user)),
+      switchMap(() => of(response)),
+    );
   }
 }

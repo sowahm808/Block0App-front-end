@@ -4,9 +4,12 @@ export interface ApiError {
   correlationId?: string;
   validationErrors?: Record<string, string[]>;
 }
-export interface LoginRequest {
+export interface LoginCredentials {
   email: string;
   password: string;
+}
+export interface LoginRequest {
+  firebaseIdToken: string;
 }
 export interface RegisterRequest {
   displayName: string;
