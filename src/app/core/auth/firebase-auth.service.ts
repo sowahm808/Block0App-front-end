@@ -18,11 +18,11 @@ export class FirebaseAuthService {
   #refreshToken: string | null = null;
 
   signInWithPassword(email: string, password: string): Observable<string> {
-    return this.#post<FirebaseAuthResponse>('accounts:signInWithPassword', {
-      email,
-      password,
-      returnSecureToken: true,
-    }).pipe(map((response) => this.#setFirebaseSession(response)));
+    return this.#emailPasswordRequest('accounts:signInWithPassword', email, password);
+  }
+
+  signUpWithPassword(email: string, password: string): Observable<string> {
+    return this.#emailPasswordRequest('accounts:signUp', email, password);
   }
 
   signInWithCustomToken(token: string): Observable<string> {
@@ -54,7 +54,18 @@ export class FirebaseAuthService {
   }
 
   #post<T>(method: string, body: unknown) {
-    return this.#http.post<T>(`${environment.firebase.identityToolkitUrl}/${method}?key=${environment.firebase.apiKey}`, body);
+    return this.#http.post<T>(
+      `${environment.firebase.identityToolkitUrl}/${method}?key=${environment.firebase.apiKey}`,
+      body,
+    );
+  }
+
+  #emailPasswordRequest(method: string, email: string, password: string): Observable<string> {
+    return this.#post<FirebaseAuthResponse>(method, {
+      email,
+      password,
+      returnSecureToken: true,
+    }).pipe(map((response) => this.#setFirebaseSession(response)));
   }
 
   #setFirebaseSession(response: FirebaseAuthResponse) {

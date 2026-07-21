@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { catchError, finalize, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { ApiService } from '../api/api.service';
-import { AuthResponse, LoginCredentials, RegisterRequest } from '../api/api.types';
+import { AuthResponse, BackendRegisterRequest, LoginCredentials, RegisterRequest } from '../api/api.types';
 import { AuthStore } from './auth.store';
 import { FirebaseAuthService } from './firebase-auth.service';
 @Injectable({ providedIn: 'root' })
@@ -17,7 +17,18 @@ export class AuthService {
     );
   }
   register(req: RegisterRequest) {
-    return this.#api.post<AuthResponse>('/auth/register', req).pipe(switchMap((r) => this.#setBackendSession(r)));
+    return this.#firebase.signUpWithPassword(req.email, req.password).pipe(
+      switchMap((firebaseIdToken) => {
+        const backendRequest: BackendRegisterRequest = {
+          displayName: req.displayName,
+          email: req.email,
+          firebaseIdToken,
+        };
+
+        return this.#api.post<AuthResponse>('/auth/register', backendRequest);
+      }),
+      switchMap((r) => this.#setBackendSession(r)),
+    );
   }
   logout() {
     this.#store.clear();
