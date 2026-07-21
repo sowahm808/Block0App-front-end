@@ -37,7 +37,20 @@ export class AuthStore {
   hasRole(roles: UserRole[]) {
     const u = this.user();
     const userRoles = u?.roles ?? [];
-    return !!u && roles.some((r) => userRoles.includes(r) || userRoles.includes('SuperAdministrator'));
+    const userPermissions = u?.permissions ?? [];
+    return (
+      !!u &&
+      roles.some(
+        (r) =>
+          userRoles.includes(r) ||
+          userRoles.includes('SuperAdministrator') ||
+          userPermissions.includes(this.#roleAccessPermission(r)),
+      )
+    );
+  }
+
+  #roleAccessPermission(role: UserRole): Permission {
+    return `${role.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}:access`;
   }
 
   hasPermission(perms: Permission[]) {
