@@ -20,10 +20,14 @@ export class AuthService {
   #refresh$?: Observable<TokenResponse>;
 
   login(req: LoginCredentials) {
-    return this.#firebase.signInWithPassword(req.email, req.password).pipe(
+    const email = req.email.trim();
+
+    return this.#firebase.signInWithPassword(email, req.password).pipe(
       switchMap((firebaseIdToken) => {
         const loginRequest: LoginRequest = {
-          email: req.email,
+          email,
+          password: req.password,
+          ...(req.mfaCode ? { mfaCode: req.mfaCode } : {}),
           firebaseIdToken,
         };
 
