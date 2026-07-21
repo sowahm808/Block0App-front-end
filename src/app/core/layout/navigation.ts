@@ -11,6 +11,7 @@ export interface NavigationItem {
 
 export const APP_NAVIGATION: readonly NavigationItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: 'space_dashboard', exact: true, permissions: ['scholar:access'] },
+  { href: '/challenge/program', label: 'Program', icon: 'route', permissions: ['scholar:access'] },
   { href: '/challenge/today', label: 'Today', icon: 'bolt', permissions: ['scholar:access'] },
   { href: '/learning-packs', label: 'Learning packs', icon: 'library_books', permissions: ['scholar:access'] },
   { href: '/scenarios', label: 'Scenarios', icon: 'psychology', permissions: ['scholar:access'] },
