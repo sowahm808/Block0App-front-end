@@ -6,6 +6,7 @@ export interface QuestionMachine {
   selectedChoiceId?: string;
   result?: QuestionSubmitResult;
   startedAt: number;
+  submittedAtUtc?: string;
   markedForReview: boolean;
 }
 export function selectAnswer(m: QuestionMachine, choiceId: string): QuestionMachine {
@@ -16,9 +17,9 @@ export function markForReview(m: QuestionMachine, marked: boolean): QuestionMach
   if (m.state === 'Completed') return m;
   return { ...m, markedForReview: marked };
 }
-export function beginSubmit(m: QuestionMachine): QuestionMachine {
+export function beginSubmit(m: QuestionMachine, submittedAtUtc = new Date().toISOString()): QuestionMachine {
   if (m.state !== 'Challenge' || !m.selectedChoiceId) throw new Error('Answer required before submission');
-  return { ...m, state: 'Submitting' };
+  return { ...m, state: 'Submitting', submittedAtUtc };
 }
 export function showCorrectAnswer(m: QuestionMachine, result: QuestionSubmitResult): QuestionMachine {
   if (m.state !== 'Submitting') throw new Error('Submission result is only valid while submitting');

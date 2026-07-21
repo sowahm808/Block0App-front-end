@@ -52,6 +52,9 @@ export interface DashboardDto {
   readinessLevel: string;
   raffleEntries: number;
   announcements: string[];
+  assignedLearningPacks?: string[];
+  dailyCapsuleGoal?: number;
+  encouragementMessage?: string;
   continueUrl: string;
   stale?: boolean;
 }
@@ -68,12 +71,14 @@ export interface W1QuestionDto {
   capsuleProgress: string;
   figureUrl?: string;
   tableHtml?: string;
+  supportingMediaUrl?: string;
   markedForReview: boolean;
 }
 export interface QuestionSubmitRequest {
   choiceId: string;
   elapsedMs: number;
   markedForReview: boolean;
+  submittedAtUtc: string;
 }
 export interface QuestionSubmitResult {
   selectedChoiceId: string;
@@ -83,4 +88,14 @@ export interface QuestionSubmitResult {
   incorrectRationales: Record<string, string>;
   reference?: string;
   memory: { highYieldFact: string; pearl: string; clinicalRelevance: string; examTrap: string; mnemonic?: string };
+}
+export interface CapsuleResumeDto {
+  capsuleAttemptId: string;
+  title: string;
+  learningPackTitle?: string;
+  questionCount: number;
+  completedQuestions: number;
+  dailyTarget?: number;
+  nextQuestion?: W1QuestionDto;
+  complete: boolean;
 }

@@ -1,9 +1,7 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = { title: 'Learning capsule', description: 'Continue a focused learning capsule.', apiPath: '/capsules' };
+import { CapsulePage } from './pages/capsule.page';
 
 export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: ':id', component: FeaturePageComponent, data },
+  { path: '', component: CapsulePage },
+  { path: ':id', component: CapsulePage },
 ] satisfies Routes;
