@@ -4,16 +4,24 @@ import { CurrentUser, Permission, UserRole } from '../models/roles';
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   readonly accessToken = signal<string | null>(null);
+  readonly refreshToken = signal<string | null>(null);
   readonly user = signal<CurrentUser | null>(null);
   readonly isAuthenticated = computed(() => !!this.accessToken() && !!this.user());
 
-  setSession(token: string, user: CurrentUser) {
+  setSession(token: string, user: CurrentUser, refreshToken?: string) {
     this.setAccessToken(token);
+    if (refreshToken) {
+      this.setRefreshToken(refreshToken);
+    }
     this.setUser(user);
   }
 
   setAccessToken(token: string) {
     this.accessToken.set(token);
+  }
+
+  setRefreshToken(token: string) {
+    this.refreshToken.set(token);
   }
 
   setUser(user: CurrentUser) {
@@ -22,6 +30,7 @@ export class AuthStore {
 
   clear() {
     this.accessToken.set(null);
+    this.refreshToken.set(null);
     this.user.set(null);
   }
 
