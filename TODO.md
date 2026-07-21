@@ -9,12 +9,14 @@
 ## Phase 2 — Scholar learning flow 🚧
 
 - [x] Dashboard API integration shell.
-- [x] W1/W2/W3 state machine and accessible component.
-- [ ] Complete capsule pages wired to backend resume endpoints.
+- [x] W1/W2/W3 state machine and accessible component with timestamped submissions, response duration capture, review marking, W2 rationales, and approved W3 memory content display.
+- [x] Complete capsule page wired to backend resume, question submission, and next-question endpoints.
+- [ ] Add acceptance tests that verify correct answers are absent from W1 payloads/browser state until the backend submission response.
 
 ## Phase 3 — Check-ins, teams, readiness 🚧
 
 - [x] Check-in validation and team privacy guardrails in UI copy/components.
+- [x] Daily dashboard announcement surface for study day, learning packs, capsule goal, team progress, encouragement, and announcements.
 - [ ] Backend persistence and trend charts.
 
 ## Phase 4 — Scenarios, rehearsal, rewards, certificates 🚧

@@ -36,10 +36,10 @@ import { DashboardService } from '../data-access/dashboard.service';
           <div class="hero-glow hero-glow-accent" aria-hidden="true"></div>
           <div class="hero-copy">
             <p class="hero-kicker">Scholar command center</p>
-            <h1 id="dash-title">Welcome back, {{ vm.data.scholarName }}.</h1>
+            <h1 id="dash-title">Study Day {{ vm.data.currentDay }} is ready</h1>
             <p>
-              Your modern study cockpit keeps today's focus, readiness signals, and team momentum in one place so every
-              session has a clear next move.
+              Welcome back, {{ vm.data.scholarName }}.
+              {{ vm.data.encouragementMessage || 'Your study cockpit keeps today's focus, readiness signals, and team momentum in one place.' }}
             </p>
             <div class="hero-actions">
               <a mat-flat-button color="primary" [routerLink]="vm.data.continueUrl">Continue study</a>
@@ -54,6 +54,7 @@ import { DashboardService } from '../data-access/dashboard.service';
               <span>{{ vm.data.overallCompletion }}%</span>
             </div>
             <p class="panel-caption">overall completion</p>
+            <p class="panel-muted">Daily capsule goal: {{ vm.data.dailyCapsuleGoal || vm.data.dailyTarget }}</p>
           </aside>
         </div>
 
@@ -137,6 +138,20 @@ import { DashboardService } from '../data-access/dashboard.service';
               <p class="eyebrow">Team pulse</p>
               <h2>{{ vm.data.teamActivity }}</h2>
               <p>Stay aligned with your cohort by turning shared activity into accountable next steps.</p>
+            </mat-card>
+
+            <mat-card class="announcements-card">
+              <div class="section-heading compact">
+                <h2>Assigned learning packs</h2>
+                <span class="live-pill">Today</span>
+              </div>
+              <ul>
+                @for (pack of vm.data.assignedLearningPacks || []; track pack) {
+                  <li>{{ pack }}</li>
+                } @empty {
+                  <li>Your assigned packs will appear here when the daily plan syncs.</li>
+                }
+              </ul>
             </mat-card>
             <mat-card class="announcements-card">
               <div class="section-heading compact">

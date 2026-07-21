@@ -30,6 +30,10 @@ const result = {
 };
 describe('Three Whisper state machine', () => {
   it('requires an answer before submitting', () => expect(() => beginSubmit(machine)).toThrow());
+  it('timestamps final answer submission', () => {
+    const submitted = beginSubmit(selectAnswer(machine, 'a'), '2026-07-21T22:00:00.000Z');
+    expect(submitted.submittedAtUtc).toBe('2026-07-21T22:00:00.000Z');
+  });
   it('enforces W1 to W2 to W3 order', () => {
     const selected = selectAnswer(machine, 'a');
     const submitting = beginSubmit(selected);
