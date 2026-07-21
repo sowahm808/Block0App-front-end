@@ -104,13 +104,15 @@ describe('AuthService backend auth integration', () => {
   });
 
   it('login stores backend tokens and hydrates the app user from /auth/me', () => {
-    auth.login({ email: 'doctor@example.com', password: 'secret-password' }).subscribe();
+    auth.login({ email: ' doctor@example.com ', password: 'secret-password', mfaCode: '123456' }).subscribe();
 
     expect(firebase.signInWithPasswordCalls).toEqual([{ email: 'doctor@example.com', password: 'secret-password' }]);
     expect(api.posts[0]).toEqual({
       path: '/auth/login',
       body: {
         email: 'doctor@example.com',
+        password: 'secret-password',
+        mfaCode: '123456',
         firebaseIdToken: 'firebase-id-token',
       },
     });
