@@ -6,35 +6,29 @@ export interface ApiError {
   correlationId?: string;
   validationErrors?: Record<string, string[]>;
 }
-export interface LoginCredentials {
-  email: string;
-  password: string;
-  mfaCode?: string;
-}
-export interface LoginRequest {
-  email: string;
-  password?: string;
-  mfaCode?: string;
-  firebaseIdToken?: string;
-}
-export interface RegisterRequest {
-  displayName: string;
-  email: string;
-  password: string;
-}
-export interface RegisterResponse {
-  userId: string;
-  email: string;
-  emailVerificationLink: string | null;
-}
-export interface TokenResponse {
-  accessToken: string;
-  expiresUtc: string;
-  refreshToken: string;
-  refreshExpiresUtc: string;
-  tokenType: string;
-}
+export interface LoginCredentials { email: string; password: string; mfaCode?: string; }
+export interface LoginRequest { email: string; password?: string; mfaCode?: string; firebaseIdToken?: string; }
+export interface RegisterRequest { displayName: string; email: string; password: string; }
+export interface RegisterResponse { userId: string; email: string; emailVerificationLink: string | null; }
+export interface TokenResponse { accessToken: string; expiresUtc: string; refreshToken: string; refreshExpiresUtc: string; tokenType: string; }
 export type CurrentUserResponse = CurrentUser;
+
+export interface LearningPack {
+  id?: string;
+  externalId?: string;
+  title: string;
+  description?: string;
+  challengeId?: string;
+  dayNumber?: number;
+  audience?: string;
+  status?: string;
+  estimatedMinutes?: number;
+  capsuleCount?: number;
+  questionCount?: number;
+  resources?: string[];
+  continueUrl?: string;
+}
+export interface DashboardLearningPack extends LearningPack { progress?: number; readinessLevel?: string; }
 export interface DashboardDto {
   scholarName: string;
   currentChallenge: string;
@@ -52,21 +46,18 @@ export interface DashboardDto {
   readinessLevel: string;
   raffleEntries: number;
   announcements: string[];
-  assignedLearningPacks?: string[];
+  assignedLearningPacks?: Array<string | DashboardLearningPack>;
   dailyCapsuleGoal?: number;
   encouragementMessage?: string;
-  continueUrl: string;
+  continueUrl?: string;
   stale?: boolean;
 }
-export interface AnswerChoiceDto {
-  id: string;
-  label: string;
-  text: string;
-}
-export interface W1QuestionDto {
+export interface Choice { id: string; label: string; text: string; }
+export type AnswerChoiceDto = Choice;
+export interface CapsuleQuestion {
   attemptId: string;
   stem: string;
-  choices: AnswerChoiceDto[];
+  choices: Choice[];
   questionNumber: number;
   capsuleProgress: string;
   figureUrl?: string;
@@ -74,13 +65,9 @@ export interface W1QuestionDto {
   supportingMediaUrl?: string;
   markedForReview: boolean;
 }
-export interface QuestionSubmitRequest {
-  choiceId: string;
-  elapsedMs: number;
-  markedForReview: boolean;
-  submittedAtUtc: string;
-}
-export interface QuestionSubmitResult {
+export type W1QuestionDto = CapsuleQuestion;
+export interface QuestionSubmitRequest { choiceId: string; elapsedMs: number; markedForReview: boolean; submittedAtUtc?: string; }
+export interface QuestionSubmitResponse {
   selectedChoiceId: string;
   correctChoiceId: string;
   correct: boolean;
@@ -89,13 +76,35 @@ export interface QuestionSubmitResult {
   reference?: string;
   memory: { highYieldFact: string; pearl: string; clinicalRelevance: string; examTrap: string; mnemonic?: string };
 }
-export interface CapsuleResumeDto {
+export type QuestionSubmitResult = QuestionSubmitResponse;
+export interface CapsuleResume {
   capsuleAttemptId: string;
   title: string;
+  summary?: string;
   learningPackTitle?: string;
   questionCount: number;
   completedQuestions: number;
   dailyTarget?: number;
-  nextQuestion?: W1QuestionDto;
+  nextQuestion?: CapsuleQuestion;
   complete: boolean;
+}
+export type CapsuleResumeDto = CapsuleResume;
+export interface LearningPackImportRequest {
+  sourceFileName?: string;
+  learningPack: LearningPack;
+  capsules: Array<{
+    externalId: string; title: string; summary?: string; sequence: number; estimatedMinutes?: number; status?: string;
+    questions: Array<{ externalId: string; sequence: number; stem: string; choices: Choice[]; explanation: QuestionSubmitResponse & { memory: QuestionSubmitResponse['memory'] } }>;
+  }>;
+}
+export interface LearningPackImportSummary {
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  validationErrors?: Array<string | { path?: string; message: string }>;
+  contentIds?: Record<string, string | string[]>;
+  importedBy?: string;
+  importedAt?: string;
+  sourceFileName?: string;
 }

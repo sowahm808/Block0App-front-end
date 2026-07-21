@@ -21,7 +21,7 @@ export const routes: Routes = [
       { path: 'dashboard', loadChildren: () => import('./features/dashboard/routes') },
       { path: 'challenge', loadChildren: () => import('./features/challenge/routes') },
       { path: 'learning-packs', loadChildren: () => import('./features/learning-packs/routes') },
-      { path: 'capsules/:capsuleAttemptId', loadChildren: () => import('./features/capsules/routes') },
+      { path: 'capsules', loadChildren: () => import('./features/capsules/routes') },
       { path: 'scenarios', loadChildren: () => import('./features/scenarios/routes') },
       { path: 'scenario-attempts/:attemptId', loadChildren: () => import('./features/scenarios/routes') },
       { path: 'rehearsal', loadChildren: () => import('./features/rehearsal/routes') },
@@ -41,7 +41,7 @@ export const routes: Routes = [
       {
         path: 'review',
         canActivate: [roleGuard],
-        data: { roles: ['ContentReviewer'] },
+        data: { roles: ['ContentReviewer', 'Administrator', 'SuperAdministrator'] },
         loadChildren: () => import('./features/content-review/routes'),
       },
       {

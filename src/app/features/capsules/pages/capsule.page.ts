@@ -13,6 +13,18 @@ import { CapsuleResumeDto, QuestionSubmitRequest } from '../../../core/api/api.t
 import { ThreeWhisperComponent } from '../../questions/components/three-whisper.component';
 import { CapsuleService } from '../capsule.service';
 
+export function sanitizeCapsuleResume(capsule: CapsuleResumeDto): CapsuleResumeDto {
+  if (!capsule.nextQuestion) return capsule;
+  const {
+    correctChoiceId: _correctChoiceId,
+    correctRationale: _correctRationale,
+    incorrectRationales: _incorrectRationales,
+    explanation: _explanation,
+    ...question
+  } = capsule.nextQuestion as CapsuleResumeDto['nextQuestion'] & Record<string, unknown>;
+  return { ...capsule, nextQuestion: question as CapsuleResumeDto['nextQuestion'] };
+}
+
 @Component({
   standalone: true,
   imports: [
@@ -84,7 +96,7 @@ export class CapsulePage {
     this.#route.paramMap.pipe(map((params) => params.get('capsuleAttemptId') ?? params.get('id') ?? '')),
     this.#refresh$,
   ]).pipe(
-    switchMap(([id]) => this.#capsules.resume(id).pipe(map((data) => ({ id, data, loading: false, error: null })))),
+    switchMap(([id]) => this.#capsules.resume(id).pipe(map((data) => ({ id, data: sanitizeCapsuleResume(data), loading: false, error: null })))),
     catchError((error) => of({ id: '', data: null, loading: false, error })),
     startWith({ id: '', data: null, loading: true, error: null }),
   );

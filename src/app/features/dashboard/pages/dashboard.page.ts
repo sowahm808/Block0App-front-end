@@ -42,7 +42,7 @@ import { DashboardService } from '../data-access/dashboard.service';
               {{ vm.data.encouragementMessage || 'Your study cockpit keeps today's focus, readiness signals, and team momentum in one place.' }}
             </p>
             <div class="hero-actions">
-              <a mat-flat-button color="primary" [routerLink]="vm.data.continueUrl">Continue study</a>
+              <a mat-flat-button color="primary" [routerLink]="capsuleLink(vm.data.continueUrl)">Continue today’s capsule</a>
               <a mat-button routerLink="/check-ins">Complete check-in</a>
             </div>
           </div>
@@ -147,7 +147,7 @@ import { DashboardService } from '../data-access/dashboard.service';
               </div>
               <ul>
                 @for (pack of vm.data.assignedLearningPacks || []; track pack) {
-                  <li>{{ pack }}</li>
+                  <li>{{ learningPackTitle(pack) }}</li>
                 } @empty {
                   <li>Your assigned packs will appear here when the daily plan syncs.</li>
                 }
@@ -500,4 +500,13 @@ export class DashboardPage {
     catchError((error) => of({ data: null, error, loading: false })),
     startWith({ data: null, error: null, loading: true }),
   );
+  capsuleLink(url?: string) {
+    if (!url) return '/learning-packs';
+    return url.startsWith('/capsules/') ? url : `/capsules/${url.split('/').filter(Boolean).pop() ?? url}`;
+  }
+
+  learningPackTitle(pack: string | { title?: string; externalId?: string }) {
+    return typeof pack === 'string' ? pack : (pack.title ?? pack.externalId ?? 'Assigned learning pack');
+  }
+
 }
