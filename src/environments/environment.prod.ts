@@ -7,7 +7,7 @@ export const environment = {
   appInsightsConnectionString: '',
   enableMockApi: false,
   firebase: {
-    apiKey: '',
+    apiKey: 'AIzaSyB9647vJIAgOwFrqEEaI347xMLb6FZXTKg',
     identityToolkitUrl: 'https://identitytoolkit.googleapis.com/v1',
     secureTokenUrl: 'https://securetoken.googleapis.com/v1',
   },
