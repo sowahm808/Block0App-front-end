@@ -111,14 +111,36 @@ describe('AuthService backend auth integration', () => {
       path: '/auth/login',
       body: {
         email: 'doctor@example.com',
-        password: 'secret-password',
-        mfaCode: undefined,
         firebaseIdToken: 'firebase-id-token',
       },
     });
-    expect(store.accessToken()).toBe('normalized-backend-access-token');
+    expect(store.accessToken()).toBe('backend-access-token');
+    expect(store.refreshToken()).toBe('backend-refresh-token');
     expect(api.gets).toEqual(['/auth/me']);
     expect(store.user()).toEqual(api.currentUser);
+  });
+
+  it('refreshes with the backend refresh token and stores rotated tokens', () => {
+    store.setRefreshToken('existing-backend-refresh-token');
+    api.tokenResponse = {
+      accessToken: 'rotated-access-token',
+      expiresUtc: '2026-07-21T12:15:00Z',
+      refreshToken: 'rotated-refresh-token',
+      refreshExpiresUtc: '2026-08-20T12:15:00Z',
+      tokenType: 'Bearer',
+    };
+
+    auth.refreshToken().subscribe();
+
+    expect(api.posts).toEqual([
+      {
+        path: '/auth/refresh',
+        body: { refreshToken: 'existing-backend-refresh-token' },
+      },
+    ]);
+    expect(store.accessToken()).toBe('rotated-access-token');
+    expect(store.refreshToken()).toBe('rotated-refresh-token');
+    expect(api.gets).toEqual(['/auth/me']);
   });
 
   it('authenticated app boot can hydrate the profile from /auth/me when an access token exists', () => {
@@ -138,7 +160,9 @@ describe('AuthService backend auth integration', () => {
   });
 
   it('does not write to Firestore /users/{uid}', () => {
-    auth.register({ displayName: 'Dr Example', email: 'doctor@example.com', password: 'a very safe password' }).subscribe();
+    auth
+      .register({ displayName: 'Dr Example', email: 'doctor@example.com', password: 'a very safe password' })
+      .subscribe();
     auth.login({ email: 'doctor@example.com', password: 'secret-password' }).subscribe();
 
     expect(api.posts.map((call) => call.path)).toEqual(['/auth/register', '/auth/login']);

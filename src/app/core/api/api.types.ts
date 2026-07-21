@@ -25,7 +25,7 @@ export interface RegisterRequest {
 export interface RegisterResponse {
   userId: string;
   email: string;
-  emailVerificationLink: string;
+  emailVerificationLink: string | null;
 }
 export interface TokenResponse {
   accessToken: string;
