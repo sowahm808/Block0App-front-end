@@ -161,6 +161,13 @@ describe('AuthService backend auth integration', () => {
     expect(store.hasPermission(['support:unknown'])).toBe(false);
   });
 
+  it('allows role-gated routes when the backend only returns role access permissions', () => {
+    store.setUser({ ...api.currentUser, permissions: ['scholar:access'] });
+
+    expect(store.hasRole(['Scholar'])).toBe(true);
+    expect(store.hasRole(['Mentor'])).toBe(false);
+  });
+
   it('does not write to Firestore /users/{uid}', () => {
     auth
       .register({ displayName: 'Dr Example', email: 'doctor@example.com', password: 'a very safe password' })
