@@ -9,6 +9,7 @@ export interface LoginCredentials {
   password: string;
 }
 export interface LoginRequest {
+  email: string;
   firebaseIdToken: string;
 }
 export interface RegisterRequest {
