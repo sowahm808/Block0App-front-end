@@ -1,4 +1,4 @@
-import { AsyncPipe, JsonPipe, TitleCasePipe } from '@angular/common';
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,12 +20,28 @@ interface FeatureRouteData {
   primaryLink?: string;
 }
 
+interface DisplayField {
+  label: string;
+  value: string;
+}
+
+interface DisplayCard {
+  title: string;
+  subtitle?: string;
+  fields: DisplayField[];
+}
+
+interface DisplayModel {
+  cards: DisplayCard[];
+  metrics: DisplayField[];
+  hasData: boolean;
+}
+
 @Component({
   selector: 'b0-feature-page',
   standalone: true,
   imports: [
     AsyncPipe,
-    JsonPipe,
     TitleCasePipe,
     RouterLink,
     MatButtonModule,
@@ -53,27 +69,63 @@ interface FeatureRouteData {
         <mat-card class="p-4 sm:p-6">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 class="m-0 text-xl font-black">Live API data</h2>
-              <p class="m-0 text-sm text-[var(--b0-text-muted)]">Backend-connected section preview.</p>
+              <h2 class="m-0 text-xl font-black">{{ vm.title }} overview</h2>
+              <p class="m-0 text-sm text-[var(--b0-text-muted)]">Live information from the connected backend.</p>
             </div>
             <b0-status-badge [label]="vm.apiPath" tone="info" />
           </div>
-          <div class="mt-5"><b0-search-input label="Filter preview" placeholder="Search loaded JSON" /></div>
+          <div class="mt-5"><b0-search-input label="Filter preview" placeholder="Search this section" /></div>
           @if (vm.loading) {
             <div class="mt-5"><b0-loading-skeleton [rows]="5" [label]="'Loading ' + (vm.title | titlecase)" /></div>
           } @else if (vm.error) {
             <div class="mt-5">
               <b0-error-state
                 title="Data unavailable"
-                [message]="'Confirm the API is running and that this user has permission for ' + vm.apiPath + '.'"
+                [message]="
+                  'Confirm the API is running and that this user has permission for ' +
+                  vm.apiPath +
+                  '. You can still use the navigation and page actions.'
+                "
               />
             </div>
-          } @else if (!vm.data) {
+          } @else if (!vm.display.hasData) {
             <div class="mt-5">
-              <b0-empty-state title="No data returned" message="This endpoint responded without displayable records." />
+              <b0-empty-state
+                title="Nothing to show yet"
+                message="This section is ready, but the endpoint did not return displayable records."
+              />
             </div>
           } @else {
-            <pre class="api-preview mt-5">{{ vm.data | json }}</pre>
+            @if (vm.display.metrics.length) {
+              <div class="feature-metrics mt-5" aria-label="Key metrics">
+                @for (metric of vm.display.metrics; track metric.label) {
+                  <div class="feature-metric">
+                    <span>{{ metric.label }}</span>
+                    <strong>{{ metric.value }}</strong>
+                  </div>
+                }
+              </div>
+            }
+            <div class="feature-card-grid mt-5">
+              @for (card of vm.display.cards; track card.title) {
+                <article class="feature-data-card">
+                  <h3>{{ card.title }}</h3>
+                  @if (card.subtitle) {
+                    <p>{{ card.subtitle }}</p>
+                  }
+                  @if (card.fields.length) {
+                    <dl>
+                      @for (field of card.fields; track field.label) {
+                        <div>
+                          <dt>{{ field.label }}</dt>
+                          <dd>{{ field.value }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  }
+                </article>
+              }
+            </div>
           }
         </mat-card>
         <mat-card class="grid content-start gap-3 p-4 sm:p-6">
@@ -96,9 +148,9 @@ export class FeaturePageComponent {
     map((data) => this.#toFeatureData(data as FeatureRouteData)),
     switchMap((feature) =>
       this.#api.get<unknown>(feature.apiPath).pipe(
-        map((data) => ({ ...feature, data, loading: false, error: null })),
-        catchError((error) => of({ ...feature, data: null, loading: false, error })),
-        startWith({ ...feature, data: null, loading: true, error: null }),
+        map((data) => ({ ...feature, display: this.#toDisplayModel(data), loading: false, error: null })),
+        catchError((error) => of({ ...feature, display: this.#toDisplayModel(null), loading: false, error })),
+        startWith({ ...feature, display: this.#toDisplayModel(null), loading: true, error: null }),
       ),
     ),
   );
@@ -113,5 +165,69 @@ export class FeaturePageComponent {
       primaryAction: data.primaryAction ?? 'Continue',
       primaryLink: data.primaryLink ?? '/dashboard',
     };
+  }
+
+  #toDisplayModel(data: unknown): DisplayModel {
+    if (data == null) return { cards: [], metrics: [], hasData: false };
+    const records = this.#extractRecords(data);
+    const metrics = this.#isRecord(data)
+      ? Object.entries(data)
+          .filter(([, value]) => this.#isPrimitive(value))
+          .slice(0, 6)
+          .map(([key, value]) => ({ label: this.#humanize(key), value: this.#formatValue(value) }))
+      : [];
+    const cards = records.slice(0, 12).map((record, index) => this.#toCard(record, index));
+    if (!cards.length && metrics.length && this.#isRecord(data)) cards.push(this.#toCard(data, 0));
+    if (!cards.length && this.#isPrimitive(data)) cards.push({ title: this.#formatValue(data), fields: [] });
+    return { cards, metrics, hasData: cards.length > 0 || metrics.length > 0 };
+  }
+
+  #extractRecords(data: unknown): unknown[] {
+    if (Array.isArray(data)) return data;
+    if (!this.#isRecord(data)) return [];
+    for (const key of ['items', 'data', 'results', 'records', 'content', 'notifications']) {
+      const value = data[key];
+      if (Array.isArray(value)) return value;
+    }
+    return [data];
+  }
+
+  #toCard(record: unknown, index: number): DisplayCard {
+    if (!this.#isRecord(record)) return { title: this.#formatValue(record), fields: [] };
+    const entries = Object.entries(record).filter(([, value]) => this.#isPrimitive(value));
+    const titleEntry = entries.find(([key]) => /^(title|name|displayName|email|subject|label)$/i.test(key));
+    const subtitleEntry = entries.find(
+      ([key]) => /^(description|summary|status|role|type)$/i.test(key) && key !== titleEntry?.[0],
+    );
+    const fields = entries
+      .filter(([key]) => key !== titleEntry?.[0] && key !== subtitleEntry?.[0])
+      .slice(0, 6)
+      .map(([key, value]) => ({ label: this.#humanize(key), value: this.#formatValue(value) }));
+    return {
+      title: titleEntry ? this.#formatValue(titleEntry[1]) : `Record ${index + 1}`,
+      subtitle: subtitleEntry ? this.#formatValue(subtitleEntry[1]) : undefined,
+      fields,
+    };
+  }
+
+  #isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  #isPrimitive(value: unknown): value is string | number | boolean | null | undefined {
+    return value == null || ['string', 'number', 'boolean'].includes(typeof value);
+  }
+
+  #formatValue(value: unknown): string {
+    if (value == null || value === '') return 'Not set';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    return String(value);
+  }
+
+  #humanize(key: string): string {
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .replace(/^./, (char) => char.toUpperCase());
   }
 }
