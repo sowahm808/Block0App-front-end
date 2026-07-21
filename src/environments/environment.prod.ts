@@ -2,7 +2,7 @@
 
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://block0app-back-end.onrender.com/api/v1',
+  apiBaseUrl: 'https://block0app-node-backend.onrender.com/api/v1',
   apiWithCredentials: false,
   appInsightsConnectionString: '',
   enableMockApi: false,
