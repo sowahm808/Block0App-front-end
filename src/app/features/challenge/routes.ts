@@ -8,6 +8,10 @@ const data = {
 };
 
 export default [
+  {
+    path: 'program',
+    loadComponent: () => import('./pages/program-structure.page').then((m) => m.ProgramStructurePage),
+  },
   { path: '', component: FeaturePageComponent, data },
   { path: ':id', component: FeaturePageComponent, data },
 ] satisfies Routes;
