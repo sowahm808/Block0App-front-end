@@ -2,6 +2,10 @@
 
 Production Angular frontend for the structured medical exam preparation challenge. The app uses standalone Angular, strict TypeScript, Angular Material, Tailwind, typed API services, Firebase ID-token authentication, role guards, in-memory access tokens, HttpOnly refresh-session cookie support, and lazy feature routing.
 
+## Business and learning operations
+
+See `docs/business-learning-guide.md` for the business needs, recommended learning-content database model, upload workflow, and end-to-end app flow.
+
 ## Commands
 
 - `npm ci`
