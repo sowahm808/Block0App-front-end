@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -57,7 +58,10 @@ export class LoginPage {
         <mat-form-field>
           <mat-label>Name</mat-label>
           <input matInput formControlName="displayName" autocomplete="name" />
-          @if (form.controls.displayName.touched && form.controls.displayName.hasError('required')) {
+          @if (
+            form.controls.displayName.touched &&
+            (form.controls.displayName.hasError('required') || form.controls.displayName.hasError('pattern'))
+          ) {
             <mat-error>Name is required.</mat-error>
           }
         </mat-form-field>
@@ -80,7 +84,7 @@ export class LoginPage {
             <mat-error>Password must be at least 12 characters.</mat-error>
           }
         </mat-form-field>
-        <button mat-raised-button color="primary" type="submit" [disabled]="busy()">
+        <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
           {{ busy() ? 'Creating account…' : 'Create account' }}
         </button>
       </form>
@@ -95,7 +99,7 @@ export class RegisterPage {
   busy = signal(false);
   errorMessage = signal('');
   form = this.#fb.nonNullable.group({
-    displayName: ['', Validators.required],
+    displayName: ['', [Validators.required, Validators.pattern(/\S/)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(12)]],
   });
@@ -107,11 +111,13 @@ export class RegisterPage {
     }
 
     this.busy.set(true);
-    this.#auth.register(this.form.getRawValue()).subscribe({
+    const { displayName, email, password } = this.form.getRawValue();
+
+    this.#auth.register({ displayName: displayName.trim(), email: email.trim(), password }).subscribe({
       next: () => void this.#router.navigateByUrl('/login'),
-      error: () => {
+      error: (error: unknown) => {
         this.busy.set(false);
-        this.errorMessage.set('We could not create your account. Please check your details and try again.');
+        this.errorMessage.set(buildRegistrationErrorMessage(error));
       },
     });
   }
@@ -123,4 +129,32 @@ export class RegisterPage {
 })
 export class SimpleAuthPage {
   title = 'Account access';
+}
+
+interface ProblemDetails {
+  title?: string;
+  detail?: string;
+  traceId?: string;
+  errors?: Record<string, string[]>;
+}
+
+export function buildRegistrationErrorMessage(error: unknown) {
+  if (!(error instanceof HttpErrorResponse)) {
+    return 'We could not create your account. Please check your details and try again.';
+  }
+
+  const problem = error.error as ProblemDetails | null;
+  const validationError = problem?.errors ? Object.values(problem.errors).flat().find(Boolean) : undefined;
+  const backendMessage = validationError ?? problem?.detail ?? problem?.title;
+  const supportReference = problem?.traceId ? ` Reference: ${problem.traceId}.` : '';
+
+  if (error.status >= 500) {
+    return `The registration service had a problem creating your account. Please try again in a few minutes or contact support.${supportReference}`;
+  }
+
+  if (backendMessage) {
+    return `${backendMessage}${supportReference}`;
+  }
+
+  return `We could not create your account. Please check your details and try again.${supportReference}`;
 }
