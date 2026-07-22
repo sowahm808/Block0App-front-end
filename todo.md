@@ -1,13 +1,34 @@
-# 21-Day Block Zero Program TODO
+# WhisperWrap Block Zero Implementation Checklist
 
-## Completed
-- [x] Documented Days 1–14 Knowledge Mastery requirements: 40 learning packs, 20 questions per pack, 800 total questions, 5 capsules per pack, 4 questions per capsule, about 14–15 capsules and 57 questions per day.
-- [x] Documented Days 15–18 Clinical Scenarios requirements: 10, 20, 40, and 60 exam-style scenarios for 130 total scenarios.
-- [x] Documented Days 19–20 Rehearsal requirements: missed questions, marked questions, weak topics, W3 memory pearls, high-yield repetition, and practice readiness checks.
-- [x] Documented Day 21 Rest and Exam Day requirements: rest, confidence, exam strategy, logistics, final readiness, and optional scheduled exam reminder.
-- [x] Added an in-app 21-day program structure page at `/challenge/program`.
-- [x] Added program navigation so students can open the roadmap from the app shell.
+## Phase 1 — Foundation ✅
 
-## Remaining
-- [x] Connect the roadmap to live backend completion status when API fields are available.
-- [x] Add per-student scheduled exam reminder controls once notification scheduling endpoints are available.
+- [x] Angular 20 standalone app foundation, strict TypeScript, Material, Tailwind, lazy router shell.
+- [x] Authentication service/store, guards, permission directive, secure auth interceptor, correlation IDs.
+- [x] API infrastructure, environment configuration, global error handling, logging.
+
+## Phase 2 — Scholar learning flow 🚧
+
+- [x] Dashboard API integration shell.
+- [x] W1/W2/W3 state machine and accessible component with timestamped submissions, response duration capture, review marking, W2 rationales, and approved W3 memory content display.
+- [x] Complete capsule page wired to backend resume, question submission, and next-question endpoints.
+- [ ] Add acceptance tests that verify correct answers are absent from W1 payloads/browser state until the backend submission response.
+
+## Phase 3 — Check-ins, teams, readiness 🚧
+
+- [x] Check-in validation and team privacy guardrails in UI copy/components.
+- [x] Daily dashboard announcement surface for study day, learning packs, capsule goal, team progress, encouragement, and announcements.
+- [ ] Backend persistence and trend charts.
+
+## Phase 4 — Scenarios, rehearsal, rewards, certificates 🚧
+
+- [ ] Complete typed feature services and pages.
+
+## Phase 5 — Admin, workflow, reports, AI 🚧
+
+- [ ] Complete CRUD, review workflow, AI draft approval surfaces.
+
+## Phase 6 — Accessibility, performance, testing, observability, Azure 🚧
+
+- [x] Docker, Nginx, CI, Azure Static Web Apps workflow.
+- [x] Initial unit and Playwright smoke tests.
+- [ ] Full acceptance-test coverage and Application Insights event wiring.
