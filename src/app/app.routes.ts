@@ -49,6 +49,7 @@ export const routes: Routes = [
       },
       {
         path: 'review',
+        canMatch: [roleMatchGuard],
         canActivate: [roleGuard],
         data: { roles: ['ContentReviewer', 'Administrator', 'SuperAdministrator'] },
         loadChildren: () => import('./features/content-review/routes'),

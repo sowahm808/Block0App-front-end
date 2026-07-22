@@ -8,11 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { filter, map, shareReplay } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AuthStore } from '../auth/auth.store';
 import { ThemeToggleComponent } from '../../shared/ui/theme-toggle/theme-toggle.component';
-import { APP_NAVIGATION, NavigationItem } from './navigation';
+import { APP_NAVIGATION, APP_NAVIGATION_GROUPS, AppNavigationGroup, AppNavigationItem, canShowNavigationItem } from './navigation';
 
 @Component({
   selector: 'b0-shell',
@@ -27,6 +28,7 @@ import { APP_NAVIGATION, NavigationItem } from './navigation';
     MatIconModule,
     MatMenuModule,
     MatSidenavModule,
+    MatTooltipModule,
     ThemeToggleComponent,
   ],
   template: `<a class="skip-link" href="#main">Skip to content</a>
@@ -40,7 +42,7 @@ import { APP_NAVIGATION, NavigationItem } from './navigation';
         fixedInViewport
       >
         <div class="flex h-full flex-col gap-4 p-3">
-          <a class="brand-lockup px-2 py-1" routerLink="/dashboard" aria-label="Mind Unlocking Academy dashboard">
+          <a class="brand-lockup px-2 py-1" [routerLink]="homeRoute()" aria-label="Mind Unlocking Academy dashboard">
             <span class="brand-mark" aria-hidden="true">M</span>
             @if (!collapsed() || (isHandset$ | async)) {
               <span class="grid leading-tight"
@@ -50,20 +52,28 @@ import { APP_NAVIGATION, NavigationItem } from './navigation';
             }
           </a>
           <nav class="grid gap-1" aria-label="Primary navigation">
-            @for (item of visibleNav(); track item.href) {
-              <a
-                mat-button
-                class="nav-link"
-                [routerLink]="item.href"
-                routerLinkActive="active-nav"
-                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-                (click)="closeHandset(drawer)"
-              >
-                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+            @for (group of visibleGroups(); track group.label) {
+              <section class="nav-group" [attr.aria-label]="group.label">
                 @if (!collapsed() || (isHandset$ | async)) {
-                  <span>{{ item.label }}</span>
+                  <p class="nav-group-label">{{ group.label }}</p>
                 }
-              </a>
+                @for (item of group.items; track item.route) {
+                  <a
+                    mat-button
+                    class="nav-link"
+                    [routerLink]="item.route"
+                    routerLinkActive="active-nav"
+                    [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                    [matTooltip]="collapsed() && !(isHandset$ | async) ? item.label : ''"
+                    (click)="closeHandset(drawer)"
+                  >
+                    <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                    @if (!collapsed() || (isHandset$ | async)) {
+                      <span>{{ item.label }}</span>
+                    }
+                  </a>
+                }
+              </section>
             }
           </nav>
           <span class="flex-1"></span>
@@ -96,9 +106,9 @@ import { APP_NAVIGATION, NavigationItem } from './navigation';
             <p class="m-0 truncate text-sm font-bold text-[var(--b0-text-muted)]">{{ currentSection() }}</p>
           </div>
           <span class="flex-1"></span>
-          <a mat-button routerLink="/challenge/today" class="hidden sm:inline-flex"
-            ><mat-icon aria-hidden="true">play_arrow</mat-icon>Start focus</a
-          >
+          @if (store.hasPermission(['scholar:access'])) {
+            <a mat-button routerLink="/challenge/today" class="hidden sm:inline-flex"><mat-icon aria-hidden="true">play_arrow</mat-icon>Start focus</a>
+          }
           <b0-theme-toggle />
           <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Open user menu">
             <mat-icon>account_circle</mat-icon>
@@ -129,7 +139,8 @@ export class ShellComponent {
       shareReplay(1),
     );
   readonly collapsed = signal(false);
-  readonly visibleNav = computed(() => APP_NAVIGATION.filter((item) => this.canShow(item)));
+  readonly visibleGroups = computed(() => APP_NAVIGATION_GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => this.canShow(item)) })).filter((group) => group.items.length > 0 && this.canShow(group)));
+  readonly homeRoute = computed(() => this.visibleGroups()[0]?.items[0]?.route ?? '/profile');
   readonly currentSection = signal('Dashboard');
   constructor() {
     this.#router.events
@@ -138,18 +149,15 @@ export class ShellComponent {
         takeUntilDestroyed(this.#destroyRef),
       )
       .subscribe((e) => {
-        const item = APP_NAVIGATION.find((n) => e.urlAfterRedirects.startsWith(n.href));
+        const item = APP_NAVIGATION.find((n) => e.urlAfterRedirects.startsWith(n.route));
         this.currentSection.set(item?.label ?? 'Workspace');
       });
   }
   toggleCollapsed(): void {
     this.collapsed.update((value) => !value);
   }
-  canShow(item: NavigationItem): boolean {
-    return (
-      (!item.roles || this.store.hasRole(item.roles)) &&
-      (!item.permissions || this.store.hasPermission(item.permissions))
-    );
+  canShow(item: AppNavigationItem | AppNavigationGroup): boolean {
+    return canShowNavigationItem(this.store, item);
   }
   closeHandset(drawer: { close: () => unknown }): void {
     this.isHandset$

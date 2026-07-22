@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { catchError, map, of, startWith, switchMap } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
@@ -12,27 +13,28 @@ import { DataTemplateComponent } from '../../shared/components/data-template.com
 interface ApiState<T> { status: 'loading' | 'loaded' | 'empty' | 'error'; data?: T; message?: string }
 
 @Component({
-  selector: 'b0-ai-draft-review',
-  standalone: true,
-  imports: [AsyncPipe, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
-  template: `<b0-page-header title="Ai Draft Review" description="Production page for Block Zero workflows." />
-  @if (state$ | async; as state) {
-    @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
-    @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load data.'" (retry)="reload()" /> }
-    @else if (state.status === 'empty') { <b0-empty-state title="No records available" message="The backend has no records for this view yet. Unsupported actions stay disabled until API support exists." /> }
-    @else { <b0-data-template [data]="state.data" ariaLabel="Ai Draft Review content" /> }
-  }`,
+  selector: 'b0-ai-draft-review', standalone: true,
+  imports: [AsyncPipe, RouterLink, MatButtonModule, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
+  template: `<nav class="mb-4 text-sm"><a mat-button routerLink="/review/ai-drafts">← Back</a></nav>
+    <b0-page-header title="AI draft review" description="Loads this detail page with a resolved route identifier before calling the backend." />
+    @if (state$ | async; as state) {
+      @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
+      @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load this record.'" (retry)="reload()" /> }
+      @else if (state.status === 'empty') { <b0-empty-state title="Record not available" message="The record was deleted, is inaccessible, or the identifier is missing." /> }
+      @else { <b0-data-template [data]="state.data" ariaLabel="AI draft review content" /> }
+    } @else { <b0-empty-state title="AI draft review is starting" message="The page will show a safe error instead of going blank if the record cannot be loaded." /> }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AiDraftReviewPage {
-  #api = inject(ApiService);
-  #route = inject(ActivatedRoute);
-  readonly state$ = this.#route.data.pipe(
-    switchMap((data) => this.#api.get<unknown>(String(data['apiPath'] ?? '/health')).pipe(
+  readonly #api = inject(ApiService); readonly #route = inject(ActivatedRoute);
+  readonly state$ = this.#route.paramMap.pipe(switchMap((params) => {
+    const id = params.get('draftId');
+    if (!id) return of({ status: 'error', message: 'Missing required route id: draftId.' } satisfies ApiState<unknown>);
+    return this.#api.get<unknown>('/review/ai-drafts/{draftId}'.replace('{draftId}', encodeURIComponent(id))).pipe(
       map((result) => ({ status: result ? 'loaded' : 'empty', data: result }) satisfies ApiState<unknown>),
       startWith({ status: 'loading' } satisfies ApiState<unknown>),
       catchError((error: unknown) => of({ status: 'error', message: error instanceof Error ? error.message : 'Backend endpoint is unavailable.' } satisfies ApiState<unknown>)),
-    )),
-  );
+    );
+  }));
   reload() { window.location.reload(); }
 }
