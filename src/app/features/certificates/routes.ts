@@ -1,13 +1,3 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = {
-  title: 'Certificates',
-  description: 'View earned certificates and credential progress.',
-  apiPath: '/certificates',
-};
-
-export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: ':id', component: FeaturePageComponent, data },
-] satisfies Routes;
+import { roleGuard } from '../../core/guards/role.guard';
+export default [{ path: '', canActivate: [roleGuard], data: { roles: ['Scholar'], pageCategory: 'scholar', title: 'Certificates', apiPath: '/certificates' }, loadComponent: () => import('./certificates.page').then(m => m.CertificatesPage) }] satisfies Routes;

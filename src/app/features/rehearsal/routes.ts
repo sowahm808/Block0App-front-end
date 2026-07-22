@@ -1,13 +1,7 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = {
-  title: 'Rehearsal',
-  description: 'Practice scenario rehearsal and feedback loops.',
-  apiPath: '/rehearsal',
-};
-
+import { roleGuard } from '../../core/guards/role.guard';
 export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: ':id', component: FeaturePageComponent, data },
+{ path: '', canActivate: [roleGuard], data: { roles: ['Scholar'], pageCategory: 'scholar', title: 'Rehearsal', apiPath: '/rehearsals/available' }, loadComponent: () => import('./rehearsal-overview.page').then(m => m.RehearsalOverviewPage) },
+{ path: ':attemptId', canActivate: [roleGuard], data: { roles: ['Scholar'], pageCategory: 'scholar', title: 'Rehearsal session', apiPath: '/rehearsal-attempts/:attemptId' }, loadComponent: () => import('./rehearsal-session.page').then(m => m.RehearsalSessionPage) },
+{ path: ':attemptId/summary', canActivate: [roleGuard], data: { roles: ['Scholar'], pageCategory: 'scholar', title: 'Rehearsal summary', apiPath: '/rehearsal-attempts/:attemptId' }, loadComponent: () => import('./rehearsal-summary.page').then(m => m.RehearsalSummaryPage) },
 ] satisfies Routes;

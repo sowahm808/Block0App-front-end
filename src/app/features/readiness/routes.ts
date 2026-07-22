@@ -1,10 +1,3 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = {
-  title: 'Readiness meter',
-  description: 'Track readiness signals from your practice.',
-  apiPath: '/readiness',
-};
-
-export default [{ path: '', component: FeaturePageComponent, data }] satisfies Routes;
+import { roleGuard } from '../../core/guards/role.guard';
+export default [{ path: '', canActivate: [roleGuard], data: { roles: ['Scholar'], pageCategory: 'scholar', title: 'Readiness', apiPath: '/readiness/current' }, loadComponent: () => import('./readiness-dashboard.page').then(m => m.ReadinessDashboardPage) }] satisfies Routes;

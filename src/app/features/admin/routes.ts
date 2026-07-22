@@ -1,15 +1,41 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-import { ImportLearningPackPage } from './pages/import-learning-pack.page';
-
-const data = {
-  title: 'Admin console',
-  description: 'Review content, user access, and operational controls.',
-  apiPath: '/admin/content',
-};
-
+import { permissionGuard } from '../../core/guards/permission.guard';
+const data = { roles: ['Administrator', 'SuperAdministrator'], pageCategory: 'admin' };
+const page = (name: string) => ({ ...data, title: name, apiPath: `/admin/${name.toLowerCase().replaceAll(' ', '-')}` });
 export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: 'content/import-learning-pack', component: ImportLearningPackPage },
-  { path: ':id', component: FeaturePageComponent, data },
+{ path: '', data: { ...data, title: 'Admin dashboard', apiPath: '/admin/dashboard' }, loadComponent: () => import('./admin-dashboard.page').then(m => m.AdminDashboardPage) },
+{ path: 'users', data: { ...page('Users'), permissions: ['admin.users.read'] }, canActivate: [permissionGuard], loadComponent: () => import('./admin-user-list.page').then(m => m.AdminUserListPage) },
+{ path: 'users/:uid', data: { ...page('User detail'), permissions: ['admin.users.read'] }, canActivate: [permissionGuard], loadComponent: () => import('./admin-user-detail.page').then(m => m.AdminUserDetailPage) },
+{ path: 'challenges', data: page('Challenges'), loadComponent: () => import('./admin-challenge-list.page').then(m => m.AdminChallengeListPage) },
+{ path: 'challenges/new', data: page('New challenge'), loadComponent: () => import('./admin-challenge-create.page').then(m => m.AdminChallengeCreatePage) },
+{ path: 'challenges/:id', data: page('Edit challenge'), loadComponent: () => import('./admin-challenge-edit.page').then(m => m.AdminChallengeEditPage) },
+{ path: 'cohorts', data: page('Cohorts'), loadComponent: () => import('./admin-cohort-list.page').then(m => m.AdminCohortListPage) },
+{ path: 'cohorts/new', data: page('New cohort'), loadComponent: () => import('./admin-cohort-create.page').then(m => m.AdminCohortCreatePage) },
+{ path: 'cohorts/:id', data: page('Cohort detail'), loadComponent: () => import('./admin-cohort-detail.page').then(m => m.AdminCohortDetailPage) },
+{ path: 'enrollments', data: page('Enrollments'), loadComponent: () => import('./admin-enrollment-list.page').then(m => m.AdminEnrollmentListPage) },
+{ path: 'teams', data: page('Teams'), loadComponent: () => import('./admin-team-list.page').then(m => m.AdminTeamListPage) },
+{ path: 'teams/:id', data: page('Team detail'), loadComponent: () => import('./admin-team-detail.page').then(m => m.AdminTeamDetailPage) },
+{ path: 'learning-packs', data: page('Learning packs'), loadComponent: () => import('./admin-learning-pack-list.page').then(m => m.AdminLearningPackListPage) },
+{ path: 'learning-packs/new', data: page('New learning pack'), loadComponent: () => import('./admin-learning-pack-create.page').then(m => m.AdminLearningPackCreatePage) },
+{ path: 'learning-packs/:id', data: page('Edit learning pack'), loadComponent: () => import('./admin-learning-pack-edit.page').then(m => m.AdminLearningPackEditPage) },
+{ path: 'learning-packs/import', loadChildren: () => import('../learning-packs/routes') },
+{ path: 'capsules/:id', data: page('Capsule detail'), loadComponent: () => import('./admin-capsule-detail.page').then(m => m.AdminCapsuleDetailPage) },
+{ path: 'questions', data: page('Questions'), loadComponent: () => import('./admin-question-list.page').then(m => m.AdminQuestionListPage) },
+{ path: 'questions/new', data: page('New question'), loadComponent: () => import('./admin-question-create.page').then(m => m.AdminQuestionCreatePage) },
+{ path: 'questions/:id', data: page('Edit question'), loadComponent: () => import('./admin-question-edit.page').then(m => m.AdminQuestionEditPage) },
+{ path: 'scenarios', data: page('Scenarios'), loadComponent: () => import('./admin-scenario-list.page').then(m => m.AdminScenarioListPage) },
+{ path: 'scenarios/new', data: page('New scenario'), loadComponent: () => import('./admin-scenario-create.page').then(m => m.AdminScenarioCreatePage) },
+{ path: 'scenarios/:id', data: page('Edit scenario'), loadComponent: () => import('./admin-scenario-edit.page').then(m => m.AdminScenarioEditPage) },
+{ path: 'content-review', data: page('Content review'), loadComponent: () => import('./admin-content-review-queue.page').then(m => m.AdminContentReviewQueuePage) },
+{ path: 'announcements', data: page('Announcements'), loadComponent: () => import('./admin-announcement-list.page').then(m => m.AdminAnnouncementListPage) },
+{ path: 'notifications', data: page('Notifications'), loadComponent: () => import('./admin-notification-dashboard.page').then(m => m.AdminNotificationDashboardPage) },
+{ path: 'readiness', data: page('Readiness'), loadComponent: () => import('./admin-readiness.page').then(m => m.AdminReadinessPage) },
+{ path: 'rewards', data: page('Rewards'), loadComponent: () => import('./admin-rewards.page').then(m => m.AdminRewardsPage) },
+{ path: 'raffles', data: page('Raffles'), loadComponent: () => import('./admin-raffles.page').then(m => m.AdminRafflesPage) },
+{ path: 'certificates', data: page('Certificates'), loadComponent: () => import('./admin-certificates.page').then(m => m.AdminCertificatesPage) },
+{ path: 'reports', data: page('Reports'), loadComponent: () => import('./admin-reports.page').then(m => m.AdminReportsPage) },
+{ path: 'audit', data: page('Audit'), loadComponent: () => import('./admin-audit.page').then(m => m.AdminAuditPage) },
+{ path: 'ai', data: page('AI'), loadComponent: () => import('./admin-ai-dashboard.page').then(m => m.AdminAiDashboardPage) },
+{ path: 'system-settings', data: page('System settings'), loadComponent: () => import('./admin-system-settings.page').then(m => m.AdminSystemSettingsPage) },
+{ path: 'feature-flags', data: page('Feature flags'), loadComponent: () => import('./admin-feature-flags.page').then(m => m.AdminFeatureFlagsPage) },
 ] satisfies Routes;
