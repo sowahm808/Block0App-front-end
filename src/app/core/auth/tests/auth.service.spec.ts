@@ -161,6 +161,19 @@ describe('AuthService backend auth integration', () => {
     expect(store.hasPermission(['support:unknown'])).toBe(false);
   });
 
+  it('maps reviewer and administrator roles to their protected page permissions', () => {
+    store.setUser({ ...api.currentUser, permissions: [], roles: ['ContentReviewer'] });
+
+    expect(store.hasPermission(['content.read'])).toBe(true);
+    expect(store.hasPermission(['content.review'])).toBe(true);
+    expect(store.hasPermission(['admin.users.read'])).toBe(false);
+
+    store.setUser({ ...api.currentUser, permissions: [], roles: ['Administrator'] });
+
+    expect(store.hasPermission(['content.review'])).toBe(true);
+    expect(store.hasPermission(['admin.users.read'])).toBe(true);
+  });
+
   it('allows role-gated routes when the backend only returns role access permissions', () => {
     store.setUser({ ...api.currentUser, permissions: ['scholar:access'] });
 

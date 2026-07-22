@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, SimpleChanges, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
@@ -87,13 +87,20 @@ import {
   }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ThreeWhisperComponent {
+export class ThreeWhisperComponent implements OnChanges {
   question = input.required<W1QuestionDto>();
   submitAnswer = output<{ choiceId: string; elapsedMs: number; markedForReview: boolean; submittedAtUtc: string }>();
   completed = output<void>();
   machine = signal<QuestionMachine | undefined>(undefined);
-  ngOnInit() {
-    this.machine.set({ state: 'Challenge', question: this.question(), startedAt: Date.now(), markedForReview: false });
+
+  ngOnChanges(changes: SimpleChanges) {
+    const questionChanged = 'question' in changes;
+    const previousAttemptId = changes['question']?.previousValue?.attemptId;
+    const currentAttemptId = this.question().attemptId;
+
+    if (questionChanged && previousAttemptId !== currentAttemptId) {
+      this.machine.set({ state: 'Challenge', question: this.question(), startedAt: Date.now(), markedForReview: false });
+    }
   }
   choose(id: string) {
     this.machine.update((m) => (m ? selectAnswer(m, id) : m));
