@@ -28,15 +28,32 @@ import { AuthService } from '../../core/auth/auth.service';
     MatProgressSpinnerModule,
   ],
   template: `
-    <main class="auth-shell">
-      <mat-card class="auth-card"
-        ><mat-card-header
-          ><mat-card-title>Welcome back</mat-card-title
-          ><mat-card-subtitle>Sign in to continue your guided practice.</mat-card-subtitle></mat-card-header
-        >
+    <main class="auth-shell auth-shell--login">
+      <section class="auth-hero-panel" aria-label="Block0 learning benefits">
+        <p class="auth-kicker">Focused board prep</p>
+        <h1>Practice with calm, clinical confidence.</h1>
+        <p>Continue your guided learning plan, review high-yield insights, and stay aligned with your support team.</p>
+
+        <div class="auth-stat-grid" aria-label="Login highlights">
+          <div>
+            <strong>Daily</strong>
+            <span>capsule goals</span>
+          </div>
+          <div>
+            <strong>Smart</strong>
+            <span>readiness signals</span>
+          </div>
+        </div>
+      </section>
+
+      <mat-card class="auth-card auth-card--elevated">
+        <mat-card-header>
+          <mat-card-title>Welcome back</mat-card-title>
+          <mat-card-subtitle>Sign in to continue your guided practice.</mat-card-subtitle>
+        </mat-card-header>
 
         <mat-card-content>
-          <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3" novalidate>
+          <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form" novalidate>
             @if (successMessage()) {
               <p class="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700" role="status">
                 {{ successMessage() }}
@@ -49,7 +66,20 @@ import { AuthService } from '../../core/auth/auth.service';
               </p>
             }
 
-            <mat-form-field>
+            <button
+              class="google-sign-in-button"
+              type="button"
+              [disabled]="busy()"
+              (click)="signInWithGoogle()"
+              aria-label="Sign in with Google"
+            >
+              <span class="google-mark" aria-hidden="true">G</span>
+              <span>{{ busy() ? 'Connecting…' : 'Continue with Google' }}</span>
+            </button>
+
+            <div class="auth-divider"><span>or sign in with email</span></div>
+
+            <mat-form-field appearance="outline">
               <mat-label>Email</mat-label>
 
               <input matInput type="email" formControlName="email" autocomplete="email" />
@@ -61,7 +91,7 @@ import { AuthService } from '../../core/auth/auth.service';
               }
             </mat-form-field>
 
-            <mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>Password</mat-label>
 
               <input
@@ -85,7 +115,13 @@ import { AuthService } from '../../core/auth/auth.service';
               }
             </mat-form-field>
 
-            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
+            <button
+              class="auth-primary-action"
+              mat-raised-button
+              color="primary"
+              type="submit"
+              [disabled]="form.invalid || busy()"
+            >
               @if (busy()) {
                 <mat-progress-spinner mode="indeterminate" diameter="18" />
               }
@@ -96,7 +132,10 @@ import { AuthService } from '../../core/auth/auth.service';
               <p class="text-sm">Check your inbox and spam folder for the verification email.</p>
             }
 
-            <a routerLink="/forgot-password">Forgot password?</a>
+            <div class="auth-links">
+              <a routerLink="/forgot-password">Forgot password?</a>
+              <a routerLink="/register">Create account</a>
+            </div>
           </form>
         </mat-card-content>
       </mat-card>
@@ -141,6 +180,24 @@ export class LoginPage {
     this.showPassword.update((value) => !value);
   }
 
+  signInWithGoogle(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    this.emailVerificationRequired.set(false);
+    this.busy.set(true);
+
+    this.#auth.loginWithGoogle().subscribe({
+      next: () => {
+        this.busy.set(false);
+        void this.#router.navigateByUrl('/dashboard');
+      },
+      error: (error: unknown) => {
+        this.busy.set(false);
+        this.errorMessage.set(buildGoogleLoginErrorMessage(error));
+      },
+    });
+  }
+
   submit(): void {
     this.errorMessage.set('');
     this.successMessage.set('');
@@ -176,6 +233,20 @@ export class LoginPage {
         },
       });
   }
+}
+
+function buildGoogleLoginErrorMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    return buildLoginErrorMessage(error).message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message.includes('popup')
+      ? 'Google sign in was not completed. Please try again or use email and password.'
+      : error.message;
+  }
+
+  return 'Google sign in was not completed. Please try again or use email and password.';
 }
 
 // ============================================================

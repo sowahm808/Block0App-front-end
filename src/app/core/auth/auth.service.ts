@@ -37,6 +37,20 @@ export class AuthService {
     );
   }
 
+  loginWithGoogle() {
+    return this.#firebase.signInWithGoogle().pipe(
+      switchMap(({ email, idToken }) => {
+        const loginRequest: LoginRequest = {
+          email: email.trim().toLowerCase(),
+          firebaseIdToken: idToken,
+        };
+
+        return this.#api.post<TokenResponse>('/auth/login', loginRequest);
+      }),
+      switchMap((r) => this.#setBackendTokens(r)),
+    );
+  }
+
   register(req: RegisterRequest) {
     return this.#api.post<RegisterResponse>('/auth/register', req);
   }
