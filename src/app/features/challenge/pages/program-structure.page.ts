@@ -17,23 +17,9 @@ interface ProgramPhase {
   actions: readonly string[];
 }
 
-interface RoadmapPhaseStatus {
-  title?: string;
-  phase?: string;
-  phaseTitle?: string;
-  completionPercent?: number;
-  completedPercent?: number;
-  percentComplete?: number;
-  complete?: boolean;
-  completed?: boolean;
-  completedItems?: number;
-  totalItems?: number;
-}
-
-interface RoadmapStatusResponse {
-  phases?: RoadmapPhaseStatus[];
-  roadmap?: { phases?: RoadmapPhaseStatus[] };
-  programRoadmap?: { phases?: RoadmapPhaseStatus[] };
+interface ProgramProgressStatus {
+  title: string;
+  completionPercent: number;
 }
 
 interface ExamReminderResponse {
@@ -321,11 +307,10 @@ export class ProgramStructurePage {
 
   readonly vm$ = combineLatest({
     dashboard: this.#dashboard.getDashboard().pipe(catchError(() => of(null))),
-    roadmap: this.#api.get<RoadmapStatusResponse>('/challenges/program/roadmap').pipe(catchError(() => of(null))),
     reminder: this.#api.get<ExamReminderResponse>('/notifications/exam-reminders/me').pipe(catchError(() => of(null))),
   }).pipe(
-    map(({ dashboard, roadmap, reminder }) => {
-      const statuses = this.#extractStatuses(roadmap);
+    map(({ dashboard, reminder }) => {
+      const statuses = this.#deriveProgramStatuses(dashboard?.currentDay, dashboard?.overallCompletion);
       return {
         overallCompletion: Math.round(dashboard?.overallCompletion ?? this.#averageCompletion(statuses)),
         phases: PROGRAM_PHASES.map((phase) => this.#toPhaseView(phase, statuses)),
@@ -362,12 +347,30 @@ export class ProgramStructurePage {
       });
   }
 
-  #extractStatuses(response: RoadmapStatusResponse | null): RoadmapPhaseStatus[] {
-    return response?.phases ?? response?.roadmap?.phases ?? response?.programRoadmap?.phases ?? [];
+  #deriveProgramStatuses(currentDay?: number, overallCompletion?: number): ProgramProgressStatus[] {
+    if (typeof overallCompletion === 'number' && overallCompletion >= 100) {
+      return PROGRAM_PHASES.map((phase) => ({ title: phase.title, completionPercent: 100 }));
+    }
+    if (typeof currentDay !== 'number' || currentDay < 1) return [];
+    return PROGRAM_PHASES.map((phase) => ({ title: phase.title, completionPercent: this.#phaseCompletionForDay(phase, currentDay) }));
   }
 
-  #toPhaseView(phase: ProgramPhase, statuses: RoadmapPhaseStatus[]): ProgramPhaseView {
-    const status = statuses.find((item) => this.#phaseName(item).toLowerCase() === phase.title.toLowerCase());
+  #phaseCompletionForDay(phase: ProgramPhase, currentDay: number): number {
+    const [startDay, endDay] = this.#phaseDayRange(phase);
+    if (currentDay > endDay) return 100;
+    if (currentDay < startDay) return 0;
+    return Math.round(((currentDay - startDay + 1) / (endDay - startDay + 1)) * 100);
+  }
+
+  #phaseDayRange(phase: ProgramPhase): [number, number] {
+    const days = phase.days.match(/\d+/g)?.map(Number) ?? [];
+    const startDay = days[0] ?? 1;
+    const endDay = days[1] ?? startDay;
+    return [startDay, endDay];
+  }
+
+  #toPhaseView(phase: ProgramPhase, statuses: ProgramProgressStatus[]): ProgramPhaseView {
+    const status = statuses.find((item) => item.title.toLowerCase() === phase.title.toLowerCase());
     const value = this.#completionValue(status);
     return {
       ...phase,
@@ -377,22 +380,12 @@ export class ProgramStructurePage {
     };
   }
 
-  #phaseName(status: RoadmapPhaseStatus): string {
-    return status.title ?? status.phaseTitle ?? status.phase ?? '';
-  }
-
-  #completionValue(status?: RoadmapPhaseStatus): number {
+  #completionValue(status?: ProgramProgressStatus): number {
     if (!status) return 0;
-    const percent = status.completionPercent ?? status.completedPercent ?? status.percentComplete;
-    if (typeof percent === 'number') return Math.max(0, Math.min(100, Math.round(percent)));
-    if (status.complete || status.completed) return 100;
-    if (typeof status.completedItems === 'number' && typeof status.totalItems === 'number' && status.totalItems > 0) {
-      return Math.round((status.completedItems / status.totalItems) * 100);
-    }
-    return 0;
+    return Math.max(0, Math.min(100, Math.round(status.completionPercent)));
   }
 
-  #averageCompletion(statuses: RoadmapPhaseStatus[]): number {
+  #averageCompletion(statuses: ProgramProgressStatus[]): number {
     if (!statuses.length) return 0;
     return statuses.reduce((total, status) => total + this.#completionValue(status), 0) / statuses.length;
   }
