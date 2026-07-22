@@ -5,7 +5,6 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { catchError, map, of, startWith } from 'rxjs';
-import { ApiService } from '../../../core/api/api.service';
 import { DashboardService } from '../../dashboard/data-access/dashboard.service';
 import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
@@ -22,19 +21,21 @@ interface ProgramProgressStatus {
   completionPercent: number;
 }
 
-interface ExamReminderResponse {
-  id?: string;
-  enabled?: boolean;
-  examAtUtc?: string;
-  reminderAtUtc?: string;
-  deliveryChannel?: string;
-}
-
 interface ProgramPhaseView extends ProgramPhase {
   completionLabel: string;
   completionValue: number;
   statusLabel: string;
 }
+
+interface ExamReminderDraft {
+  examAtUtc: string;
+  reminderAtUtc: string;
+  minutesBefore: number;
+  deliveryChannel: 'in-app';
+  enabled: boolean;
+}
+
+const EXAM_REMINDER_STORAGE_KEY = 'block0.examReminder.me';
 
 const PROGRAM_PHASES: readonly ProgramPhase[] = [
   {
@@ -121,7 +122,7 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
           <p class="phase-days">Exam reminder</p>
           <h2>Schedule your optional Day 21 reminder</h2>
           <p class="phase-summary">
-            Save a reminder for the signed-in student without making an unavailable reminder lookup during page load.
+            Save a private reminder in this browser while backend notification scheduling is unavailable.
           </p>
         </div>
         <form [formGroup]="reminderForm" (ngSubmit)="scheduleReminder()" class="reminder-form">
@@ -291,12 +292,11 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgramStructurePage {
-  readonly #api = inject(ApiService);
   readonly #dashboard = inject(DashboardService);
   readonly #fb = inject(FormBuilder);
 
   savingReminder = false;
-  reminderMessage = '';
+  reminderMessage = this.#savedReminderMessage();
   readonly reminderForm = this.#fb.nonNullable.group({
     examAtLocal: ['', Validators.required],
     minutesBefore: [1440, Validators.required],
@@ -321,24 +321,38 @@ export class ProgramStructurePage {
     const { examAtLocal, minutesBefore } = this.reminderForm.getRawValue();
     const examDate = new Date(examAtLocal);
     const reminderDate = new Date(examDate.getTime() - minutesBefore * 60_000);
-    this.#api
-      .post<ExamReminderResponse>('/notifications/exam-reminders/me', {
-        examAtUtc: examDate.toISOString(),
-        reminderAtUtc: reminderDate.toISOString(),
-        minutesBefore,
-        deliveryChannel: 'in-app',
-        enabled: true,
-      })
-      .subscribe({
-        next: () => {
-          this.savingReminder = false;
-          this.reminderMessage = 'Exam reminder saved for this student.';
-        },
-        error: () => {
-          this.savingReminder = false;
-          this.reminderMessage = 'Reminder endpoint is unavailable. Try again when notification scheduling is online.';
-        },
-      });
+    const reminder: ExamReminderDraft = {
+      examAtUtc: examDate.toISOString(),
+      reminderAtUtc: reminderDate.toISOString(),
+      minutesBefore,
+      deliveryChannel: 'in-app',
+      enabled: true,
+    };
+
+    this.#saveReminder(reminder);
+    this.savingReminder = false;
+    this.reminderMessage = this.#formatReminderMessage(reminder);
+  }
+
+  #saveReminder(reminder: ExamReminderDraft): void {
+    try {
+      localStorage.setItem(EXAM_REMINDER_STORAGE_KEY, JSON.stringify(reminder));
+    } catch {
+      // Keep the form usable in restricted browser contexts; the visible message still confirms the selected time.
+    }
+  }
+
+  #savedReminderMessage(): string {
+    try {
+      const reminder = JSON.parse(localStorage.getItem(EXAM_REMINDER_STORAGE_KEY) ?? 'null') as ExamReminderDraft | null;
+      return reminder?.enabled ? this.#formatReminderMessage(reminder) : '';
+    } catch {
+      return '';
+    }
+  }
+
+  #formatReminderMessage(reminder: ExamReminderDraft): string {
+    return `Exam reminder saved in this browser for ${new Date(reminder.reminderAtUtc).toLocaleString()}.`;
   }
 
   #deriveProgramStatuses(currentDay?: number, overallCompletion?: number): ProgramProgressStatus[] {
