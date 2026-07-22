@@ -39,7 +39,7 @@ import { DashboardService } from '../data-access/dashboard.service';
             <h1 id="dash-title">Study Day {{ vm.data.currentDay }} is ready</h1>
             <p>
               Welcome back, {{ vm.data.scholarName }}.
-              {{ vm.data.encouragementMessage || 'Your study cockpit keeps today's focus, readiness signals, and team momentum in one place.' }}
+              {{ vm.data.encouragementMessage || "Your study cockpit keeps today's focus, readiness signals, and team momentum in one place." }}
             </p>
             <div class="hero-actions">
               <a mat-flat-button color="primary" [routerLink]="capsuleLink(vm.data.continueUrl)">Continue today’s capsule</a>
