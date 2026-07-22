@@ -1,10 +1,10 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { catchError, combineLatest, map, of, startWith } from 'rxjs';
+import { catchError, map, of, startWith } from 'rxjs';
 import { ApiService } from '../../../core/api/api.service';
 import { DashboardService } from '../../dashboard/data-access/dashboard.service';
 import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
@@ -96,7 +96,7 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DatePipe, ReactiveFormsModule, RouterLink, MatButtonModule, MatCardModule, PageHeaderComponent],
+  imports: [AsyncPipe, ReactiveFormsModule, RouterLink, MatButtonModule, MatCardModule, PageHeaderComponent],
   template: `<section class="grid gap-5" aria-labelledby="program-title">
     @if (vm$ | async; as vm) {
       <b0-page-header
@@ -121,11 +121,8 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
           <p class="phase-days">Exam reminder</p>
           <h2>Schedule your optional Day 21 reminder</h2>
           <p class="phase-summary">
-            Controls post to the notification scheduling endpoint for the signed-in student. Existing reminder details appear when the backend returns them.
+            Save a reminder for the signed-in student without making an unavailable reminder lookup during page load.
           </p>
-          @if (vm.reminder?.enabled) {
-            <p class="reminder-status">Reminder active for {{ vm.reminder?.reminderAtUtc | date: 'medium' }}.</p>
-          }
         </div>
         <form [formGroup]="reminderForm" (ngSubmit)="scheduleReminder()" class="reminder-form">
           <label>
@@ -305,19 +302,16 @@ export class ProgramStructurePage {
     minutesBefore: [1440, Validators.required],
   });
 
-  readonly vm$ = combineLatest({
-    dashboard: this.#dashboard.getDashboard().pipe(catchError(() => of(null))),
-    reminder: this.#api.get<ExamReminderResponse>('/notifications/exam-reminders/me').pipe(catchError(() => of(null))),
-  }).pipe(
-    map(({ dashboard, reminder }) => {
+  readonly vm$ = this.#dashboard.getDashboard().pipe(
+    catchError(() => of(null)),
+    map((dashboard) => {
       const statuses = this.#deriveProgramStatuses(dashboard?.currentDay, dashboard?.overallCompletion);
       return {
         overallCompletion: Math.round(dashboard?.overallCompletion ?? this.#averageCompletion(statuses)),
         phases: PROGRAM_PHASES.map((phase) => this.#toPhaseView(phase, statuses)),
-        reminder,
       };
     }),
-    startWith({ overallCompletion: 0, phases: PROGRAM_PHASES.map((phase) => this.#toPhaseView(phase, [])), reminder: null }),
+    startWith({ overallCompletion: 0, phases: PROGRAM_PHASES.map((phase) => this.#toPhaseView(phase, [])) }),
   );
 
   scheduleReminder(): void {
