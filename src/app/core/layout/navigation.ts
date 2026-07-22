@@ -21,6 +21,7 @@ export const APP_NAVIGATION: readonly NavigationItem[] = [
   { href: '/profile', label: 'Profile', icon: 'account_circle' },
   { href: '/mentor', label: 'Mentor', icon: 'school', roles: ['Mentor'] },
   { href: '/review', label: 'Review', icon: 'rate_review', roles: ['ContentReviewer'] },
-  { href: '/review/import-learning-pack', label: 'Import content', icon: 'upload_file', roles: ['ContentReviewer', 'Administrator', 'SuperAdministrator'] },
+  { href: '/admin/learning-packs/import', label: 'Import content', icon: 'upload_file', roles: ['Administrator', 'SuperAdministrator'] },
+  { href: '/review/import-learning-pack', label: 'Import content', icon: 'upload_file', roles: ['ContentReviewer'] },
   { href: '/admin', label: 'Admin', icon: 'admin_panel_settings', roles: ['Administrator', 'SuperAdministrator'] },
 ];

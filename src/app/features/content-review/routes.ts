@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { permissionGuard } from '../../core/guards/permission.guard';
 const data = { roles: ['ContentReviewer', 'Administrator', 'SuperAdministrator'], pageCategory: 'content-review' };
 export default [
+  { path: 'import-learning-pack', data: { ...data, title: 'Import learning pack', apiPath: '/admin/content/import-learning-pack' }, loadComponent: () => import('../admin/pages/import-learning-pack.page').then(m => m.ImportLearningPackPage) },
   { path: '', data: { ...data, title: 'Review dashboard', apiPath: '/review/dashboard', permissions: ['content.read'] }, canActivate: [permissionGuard], loadComponent: () => import('./review-dashboard.page').then(m => m.ReviewDashboardPage) },
   { path: 'content', data: { ...data, title: 'Review queue', apiPath: '/review/content', permissions: ['content.review'] }, canActivate: [permissionGuard], loadComponent: () => import('./review-queue.page').then(m => m.ReviewQueuePage) },
   { path: 'questions', data: { ...data, title: 'Question reviews', apiPath: '/review/questions', permissions: ['content.read'] }, canActivate: [permissionGuard], loadComponent: () => import('./review-queue.page').then(m => m.ReviewQueuePage) },
