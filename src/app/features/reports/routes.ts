@@ -1,9 +1,3 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = { title: 'Reports', description: 'Analyze program outcomes and engagement.', apiPath: '/reports' };
-
-export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: ':id', component: FeaturePageComponent, data },
-] satisfies Routes;
+import { roleGuard } from '../../core/guards/role.guard';
+export default [{ path: '', data: { roles: ['Administrator', 'SuperAdministrator'], title: 'Reports', apiPath: '/admin/reports' }, canActivate: [roleGuard], loadComponent: () => import('../admin/admin-reports.page').then((m) => m.AdminReportsPage) }] satisfies Routes;

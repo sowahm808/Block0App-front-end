@@ -1,9 +1,6 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = { title: 'Rewards', description: 'Track points, raffles, and recognition.', apiPath: '/rewards' };
-
+import { roleGuard } from '../../core/guards/role.guard';
 export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: ':id', component: FeaturePageComponent, data },
+{ path: '', canActivate: [roleGuard], data: { roles: ['Scholar'], pageCategory: 'scholar', title: 'Rewards', apiPath: '/rewards' }, loadComponent: () => import('./rewards.page').then(m => m.RewardsPage) },
+{ path: 'raffle-entries', redirectTo: '/raffle-entries', pathMatch: 'full' },
 ] satisfies Routes;

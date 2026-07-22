@@ -1,34 +1,16 @@
-# WhisperWrap Block Zero Implementation Checklist
+# Route replacement checklist
 
-## Phase 1 — Foundation ✅
+- [x] Wildcard `**` no longer renders `FeaturePageComponent`; it renders `NotFoundPage`.
+- [x] Public routes added: `/account-disabled`, `/certificate/verify/:verificationCode`, `/not-found`, `/server-error`.
+- [x] Scholar placeholders replaced for challenge today, scenarios, rehearsal, check-in history, support, readiness, rewards, raffle entries, certificates, notifications, profile, and settings.
+- [x] Mentor placeholder routes replaced with mentor-specific pages and permission metadata.
+- [x] Content-review placeholder routes replaced with review-specific pages and permission metadata.
+- [x] Admin placeholder routes replaced with admin-specific pages and permission metadata.
+- [x] Legacy support, reports, and audit route files no longer import `FeaturePageComponent`.
 
-- [x] Angular 20 standalone app foundation, strict TypeScript, Material, Tailwind, lazy router shell.
-- [x] Authentication service/store, guards, permission directive, secure auth interceptor, correlation IDs.
-- [x] API infrastructure, environment configuration, global error handling, logging.
+## Remaining hardening
 
-## Phase 2 — Scholar learning flow 🚧
-
-- [x] Dashboard API integration shell.
-- [x] W1/W2/W3 state machine and accessible component with timestamped submissions, response duration capture, review marking, W2 rationales, and approved W3 memory content display.
-- [x] Complete capsule page wired to backend resume, question submission, and next-question endpoints.
-- [ ] Add acceptance tests that verify correct answers are absent from W1 payloads/browser state until the backend submission response.
-
-## Phase 3 — Check-ins, teams, readiness 🚧
-
-- [x] Check-in validation and team privacy guardrails in UI copy/components.
-- [x] Daily dashboard announcement surface for study day, learning packs, capsule goal, team progress, encouragement, and announcements.
-- [ ] Backend persistence and trend charts.
-
-## Phase 4 — Scenarios, rehearsal, rewards, certificates 🚧
-
-- [ ] Complete typed feature services and pages.
-
-## Phase 5 — Admin, workflow, reports, AI 🚧
-
-- [ ] Complete CRUD, review workflow, AI draft approval surfaces.
-
-## Phase 6 — Accessibility, performance, testing, observability, Azure 🚧
-
-- [x] Docker, Nginx, CI, Azure Static Web Apps workflow.
-- [x] Initial unit and Playwright smoke tests.
-- [ ] Full acceptance-test coverage and Application Insights event wiring.
+- [ ] Replace generic JSON payload rendering with domain-designed templates as backend DTOs stabilize.
+- [ ] Expand unit coverage for every generated page shell.
+- [ ] Expand Playwright tests from route smoke coverage into complete workflow assertions once backend fixtures are available.
+- [ ] Re-run full checks after each follow-up phase.

@@ -1,9 +1,2 @@
 import { Routes } from '@angular/router';
-import { FeaturePageComponent } from '../../shared/components/feature-page.component';
-
-const data = { title: 'Profile', description: 'Manage your account profile and app identity.', apiPath: '/auth/me' };
-
-export default [
-  { path: '', component: FeaturePageComponent, data },
-  { path: ':id', component: FeaturePageComponent, data },
-] satisfies Routes;
+export default [{ path: '', data: { title: 'Profile', pageCategory: 'account', apiPath: '/profile' }, loadComponent: () => import('./profile.page').then(m => m.ProfilePage) }] satisfies Routes;
