@@ -55,7 +55,31 @@ export class AuthStore {
 
   hasPermission(perms: Permission[]) {
     const u = this.user();
-    const userRoles = u?.roles ?? [];
-    return !!u && perms.every((p) => u.permissions.includes(p) || userRoles.includes('SuperAdministrator'));
+    if (!u) return false;
+
+    const userRoles = u.roles ?? [];
+    const grantedPermissions = new Set(u.permissions);
+    for (const role of userRoles) {
+      for (const permission of this.#permissionsForRole(role)) {
+        grantedPermissions.add(permission);
+      }
+    }
+
+    return perms.every((p) => grantedPermissions.has('*') || grantedPermissions.has(p));
+  }
+
+  #permissionsForRole(role: UserRole): Permission[] {
+    switch (role) {
+      case 'SuperAdministrator':
+      case 'Administrator':
+        return ['*'];
+      case 'ContentReviewer':
+        return ['content.read', 'content.review', 'content-review:access'];
+      case 'Mentor':
+        return ['mentor.teams.read', 'mentor.support.read', 'mentor.progress.read', 'mentor:access'];
+      case 'Scholar':
+        return ['scholar:access'];
+    }
   }
 }
+
