@@ -78,6 +78,14 @@ export class NotificationsApiService extends CrudApi {
   constructor() {
     super('/notifications');
   }
+
+  getMyExamReminder<T>() {
+    return this.api.get<T>('/notifications/exam-reminders/me');
+  }
+
+  saveMyExamReminder<T>(body: unknown) {
+    return this.api.post<T>('/notifications/exam-reminders/me', body);
+  }
 }
 @Injectable({ providedIn: 'root' })
 export class RewardsApiService extends CrudApi {
