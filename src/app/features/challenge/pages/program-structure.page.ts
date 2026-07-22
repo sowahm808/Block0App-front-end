@@ -1,11 +1,12 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { catchError, map, of, startWith } from 'rxjs';
+import { catchError, finalize, map, of, startWith } from 'rxjs';
 import { DashboardService } from '../../dashboard/data-access/dashboard.service';
+import { NotificationsApiService } from '../../../core/api/feature-api.services';
 import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
 interface ProgramPhase {
@@ -28,14 +29,20 @@ interface ProgramPhaseView extends ProgramPhase {
 }
 
 interface ExamReminderDraft {
-  examAtUtc: string;
-  reminderAtUtc: string;
-  minutesBefore: number;
-  deliveryChannel: 'in-app';
+  examName: string;
+  examDate: string;
+  reminderTime: string;
+  timezone: string;
+  reminderOffsetsMinutes: number[];
+  channels: ['in-app'];
+  notes: string;
   enabled: boolean;
 }
 
-const EXAM_REMINDER_STORAGE_KEY = 'block0.examReminder.me';
+interface ExamReminderResponse extends ExamReminderDraft {
+  createdAtUtc?: string;
+  updatedAtUtc?: string;
+}
 
 const PROGRAM_PHASES: readonly ProgramPhase[] = [
   {
@@ -51,7 +58,11 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
       '14–15 capsules per day',
       '≈57 questions per day',
     ],
-    actions: ['Start assigned learning packs', 'Complete capsule question sets', 'Track daily capsule and question pace'],
+    actions: [
+      'Start assigned learning packs',
+      'Complete capsule question sets',
+      'Track daily capsule and question pace',
+    ],
   },
   {
     title: 'Clinical Scenarios',
@@ -114,7 +125,9 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
         <mat-card class="summary-card"><strong>40</strong><span>learning packs</span></mat-card>
         <mat-card class="summary-card"><strong>800</strong><span>knowledge questions</span></mat-card>
         <mat-card class="summary-card"><strong>130</strong><span>clinical scenarios</span></mat-card>
-        <mat-card class="summary-card"><strong>{{ vm.overallCompletion }}%</strong><span>live completion</span></mat-card>
+        <mat-card class="summary-card"
+          ><strong>{{ vm.overallCompletion }}%</strong><span>live completion</span></mat-card
+        >
       </div>
 
       <mat-card class="reminder-card">
@@ -122,10 +135,14 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
           <p class="phase-days">Exam reminder</p>
           <h2>Schedule your optional Day 21 reminder</h2>
           <p class="phase-summary">
-            Save a private reminder in this browser while backend notification scheduling is unavailable.
+            Save a private reminder to your account so it follows you across browsers and devices.
           </p>
         </div>
         <form [formGroup]="reminderForm" (ngSubmit)="scheduleReminder()" class="reminder-form">
+          <label>
+            <span>Exam name</span>
+            <input type="text" formControlName="examName" maxlength="120" placeholder="e.g. Block Zero final exam" />
+          </label>
           <label>
             <span>Exam date and time</span>
             <input type="datetime-local" formControlName="examAtLocal" />
@@ -137,6 +154,15 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
               <option [ngValue]="180">3 hours before</option>
               <option [ngValue]="1440">1 day before</option>
             </select>
+          </label>
+          <label>
+            <span>Notes (optional)</span>
+            <input
+              type="text"
+              formControlName="notes"
+              maxlength="500"
+              placeholder="Bring ID, admission ticket, and snacks"
+            />
           </label>
           <button mat-raised-button color="primary" type="submit" [disabled]="reminderForm.invalid || savingReminder">
             {{ savingReminder ? 'Scheduling…' : 'Save reminder' }}
@@ -293,13 +319,18 @@ const PROGRAM_PHASES: readonly ProgramPhase[] = [
 })
 export class ProgramStructurePage {
   readonly #dashboard = inject(DashboardService);
+  readonly #notifications = inject(NotificationsApiService);
+  readonly #destroyRef = inject(DestroyRef);
   readonly #fb = inject(FormBuilder);
 
   savingReminder = false;
-  reminderMessage = this.#savedReminderMessage();
+  loadingReminder = true;
+  reminderMessage = '';
   readonly reminderForm = this.#fb.nonNullable.group({
+    examName: ['Block Zero exam', [Validators.required, Validators.maxLength(120)]],
     examAtLocal: ['', Validators.required],
     minutesBefore: [1440, Validators.required],
+    notes: ['', Validators.maxLength(500)],
   });
 
   readonly vm$ = this.#dashboard.getDashboard().pipe(
@@ -314,45 +345,72 @@ export class ProgramStructurePage {
     startWith({ overallCompletion: 0, phases: PROGRAM_PHASES.map((phase) => this.#toPhaseView(phase, [])) }),
   );
 
+  constructor() {
+    const subscription = this.#notifications
+      .getMyExamReminder<ExamReminderResponse>()
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => (this.loadingReminder = false)),
+      )
+      .subscribe((reminder) => {
+        if (!reminder?.enabled) return;
+        this.reminderForm.patchValue({
+          examName: reminder.examName,
+          examAtLocal: this.#toLocalDateTimeInputValue(reminder.examDate),
+          minutesBefore: reminder.reminderOffsetsMinutes[0] ?? 1440,
+          notes: reminder.notes ?? '',
+        });
+        this.reminderMessage = this.#formatReminderMessage(reminder);
+      });
+    this.#destroyRef.onDestroy(() => subscription.unsubscribe());
+  }
+
   scheduleReminder(): void {
     if (this.reminderForm.invalid) return;
     this.savingReminder = true;
     this.reminderMessage = '';
-    const { examAtLocal, minutesBefore } = this.reminderForm.getRawValue();
-    const examDate = new Date(examAtLocal);
-    const reminderDate = new Date(examDate.getTime() - minutesBefore * 60_000);
-    const reminder: ExamReminderDraft = {
-      examAtUtc: examDate.toISOString(),
-      reminderAtUtc: reminderDate.toISOString(),
-      minutesBefore,
-      deliveryChannel: 'in-app',
+    const reminder = this.#buildReminder();
+
+    this.#notifications
+      .saveMyExamReminder<ExamReminderResponse>(reminder)
+      .pipe(finalize(() => (this.savingReminder = false)))
+      .subscribe({
+        next: (savedReminder) => {
+          this.reminderMessage = this.#formatReminderMessage(savedReminder);
+        },
+        error: () => {
+          this.reminderMessage = 'We could not save your exam reminder. Please check your connection and try again.';
+        },
+      });
+  }
+
+  #buildReminder(): ExamReminderDraft {
+    const { examName, examAtLocal, minutesBefore, notes } = this.reminderForm.getRawValue();
+    return {
+      examName: examName.trim(),
+      examDate: new Date(examAtLocal).toISOString(),
+      reminderTime: this.#toReminderTime(examAtLocal, minutesBefore),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+      reminderOffsetsMinutes: [minutesBefore],
+      channels: ['in-app'],
+      notes: notes.trim(),
       enabled: true,
     };
-
-    this.#saveReminder(reminder);
-    this.savingReminder = false;
-    this.reminderMessage = this.#formatReminderMessage(reminder);
   }
 
-  #saveReminder(reminder: ExamReminderDraft): void {
-    try {
-      localStorage.setItem(EXAM_REMINDER_STORAGE_KEY, JSON.stringify(reminder));
-    } catch {
-      // Keep the form usable in restricted browser contexts; the visible message still confirms the selected time.
-    }
-  }
-
-  #savedReminderMessage(): string {
-    try {
-      const reminder = JSON.parse(localStorage.getItem(EXAM_REMINDER_STORAGE_KEY) ?? 'null') as ExamReminderDraft | null;
-      return reminder?.enabled ? this.#formatReminderMessage(reminder) : '';
-    } catch {
-      return '';
-    }
+  #toReminderTime(examAtLocal: string, minutesBefore: number): string {
+    const reminderDate = new Date(new Date(examAtLocal).getTime() - minutesBefore * 60_000);
+    return reminderDate.toISOString();
   }
 
   #formatReminderMessage(reminder: ExamReminderDraft): string {
-    return `Exam reminder saved in this browser for ${new Date(reminder.reminderAtUtc).toLocaleString()}.`;
+    return `Exam reminder saved to your account for ${new Date(reminder.reminderTime).toLocaleString()}.`;
+  }
+
+  #toLocalDateTimeInputValue(value: string): string {
+    const date = new Date(value);
+    const offsetMs = date.getTimezoneOffset() * 60_000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
   }
 
   #deriveProgramStatuses(currentDay?: number, overallCompletion?: number): ProgramProgressStatus[] {
@@ -360,7 +418,10 @@ export class ProgramStructurePage {
       return PROGRAM_PHASES.map((phase) => ({ title: phase.title, completionPercent: 100 }));
     }
     if (typeof currentDay !== 'number' || currentDay < 1) return [];
-    return PROGRAM_PHASES.map((phase) => ({ title: phase.title, completionPercent: this.#phaseCompletionForDay(phase, currentDay) }));
+    return PROGRAM_PHASES.map((phase) => ({
+      title: phase.title,
+      completionPercent: this.#phaseCompletionForDay(phase, currentDay),
+    }));
   }
 
   #phaseCompletionForDay(phase: ProgramPhase, currentDay: number): number {
