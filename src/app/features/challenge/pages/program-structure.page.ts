@@ -400,11 +400,19 @@ export class ProgramStructurePage {
 
   #toReminderTime(examAtLocal: string, minutesBefore: number): string {
     const reminderDate = new Date(new Date(examAtLocal).getTime() - minutesBefore * 60_000);
-    return reminderDate.toISOString();
+    return reminderDate.toTimeString().slice(0, 5);
   }
 
   #formatReminderMessage(reminder: ExamReminderDraft): string {
-    return `Exam reminder saved to your account for ${new Date(reminder.reminderTime).toLocaleString()}.`;
+    const reminderTime = reminder.reminderTime.match(/^([01]\d|2[0-3]):[0-5]\d$/)
+      ? reminder.reminderTime
+      : this.#toLocalTimeValue(reminder.reminderTime);
+    return `Exam reminder saved to your account for ${reminderTime}.`;
+  }
+
+  #toLocalTimeValue(value: string): string {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toTimeString().slice(0, 5);
   }
 
   #toLocalDateTimeInputValue(value: string): string {
