@@ -1,4 +1,3 @@
-import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,10 +13,10 @@ const STARTER_JSON = `{
 
 @Component({
   standalone: true,
-  imports: [FormsModule, JsonPipe, MatButtonModule, MatCardModule],
+  imports: [FormsModule, MatButtonModule, MatCardModule],
   template: `<section class="grid gap-5"><h1>Import learning pack</h1><mat-card class="grid gap-4 p-5"><p>Paste the backend learning-pack JSON schema or upload a JSON file.</p><input type="file" accept="application/json,.json" (change)="readFile($event)" /><textarea class="min-h-96 rounded border p-3 font-mono" [(ngModel)]="jsonText" (ngModelChange)="validate()"></textarea><div class="flex gap-2"><button mat-stroked-button type="button" (click)="copyStarterJson()">Copy starter JSON</button><button mat-flat-button color="primary" type="button" [disabled]="!!parseError() || submitting()" (click)="submit()">{{ submitting() ? 'Importing…' : 'Import learning pack' }}</button></div>@if (parseError()) { <p class="text-red-700">{{ parseError() }}</p> }</mat-card>
   @if (preview(); as p) { <mat-card class="p-5"><h2>Preview</h2><p><strong>{{ p.title }}</strong> · {{ p.externalId }}</p><p>{{ p.capsuleCount }} capsules · {{ p.questionCount }} questions</p></mat-card> }
-  @if (summary(); as s) { <mat-card class="p-5"><h2>Import summary</h2><p>Created {{ s.created }} · Updated {{ s.updated }} · Skipped {{ s.skipped }} · Failed {{ s.failed }}</p>@if (s.importedBy || s.importedAt || s.sourceFileName) { <p>Imported by {{ s.importedBy || 'unknown' }} at {{ s.importedAt || 'unknown time' }} from {{ s.sourceFileName || 'pasted JSON' }}</p> }@if (s.contentIds) { <pre>{{ s.contentIds | json }}</pre> }@if (s.validationErrors?.length) { <h3>Validation errors</h3><ul>@for (e of s.validationErrors; track $index) { <li>{{ validationErrorText(e) }}</li> }</ul> }</mat-card> }
+  @if (summary(); as s) { <mat-card class="p-5"><h2>Import summary</h2><p>Created {{ s.created }} · Updated {{ s.updated }} · Skipped {{ s.skipped }} · Failed {{ s.failed }}</p>@if (s.importedBy || s.importedAt || s.sourceFileName) { <p>Imported by {{ s.importedBy || 'unknown' }} at {{ s.importedAt || 'unknown time' }} from {{ s.sourceFileName || 'pasted JSON' }}</p> }@if (contentIdEntries(s.contentIds).length) { <h3>Imported content</h3><dl class="grid gap-2">@for (entry of contentIdEntries(s.contentIds); track entry.label) { <div><dt class="font-semibold">{{ entry.label }}</dt><dd class="m-0">{{ entry.value }}</dd></div> }</dl> }@if (s.validationErrors?.length) { <h3>Validation errors</h3><ul>@for (e of s.validationErrors; track $index) { <li>{{ validationErrorText(e) }}</li> }</ul> }</mat-card> }
   @if (serverError()) { <mat-card class="p-5"><h2>Import failed</h2><p>{{ serverError() }}</p></mat-card> }</section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -32,5 +31,6 @@ export class ImportLearningPackPage {
   copyStarterJson() { void navigator.clipboard?.writeText(STARTER_JSON); this.jsonText = STARTER_JSON; this.validate(); }
   readFile(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; file.text().then((text) => { this.jsonText = text; this.validate(); }); }
   submit() { const body = this.parse(); if (!body) return; this.submitting.set(true); this.serverError.set(null); this.#service.importLearningPack(body).subscribe({ next: (s) => { this.summary.set(s); this.submitting.set(false); }, error: (e) => { this.submitting.set(false); this.serverError.set(e.status === 403 ? 'You do not have permission to import content.' : e.status === 400 ? 'The backend rejected this import. Review validation errors and retry.' : 'Backend unavailable. Please retry.'); } }); }
+  contentIdEntries(contentIds: Record<string, string | string[]> | undefined) { return Object.entries(contentIds ?? {}).map(([label, value]) => ({ label, value: Array.isArray(value) ? value.join(', ') : value })); }
   validationErrorText(e: string | { path?: string; message: string }) { return typeof e === 'string' ? e : `${e.path ? `${e.path}: ` : ''}${e.message}`; }
 }
