@@ -185,11 +185,23 @@ export class FeaturePageComponent {
   #extractRecords(data: unknown): unknown[] {
     if (Array.isArray(data)) return data;
     if (!this.#isRecord(data)) return [];
-    for (const key of ['items', 'data', 'results', 'records', 'content', 'notifications']) {
+
+    const preferredKeys = ['items', 'data', 'results', 'records', 'content', 'notifications'];
+    for (const key of preferredKeys) {
       const value = data[key];
       if (Array.isArray(value)) return value;
     }
-    return [data];
+
+    const nestedRecords = Object.entries(data).flatMap(([key, value]) =>
+      Array.isArray(value) ? value.map((item) => this.#withSection(item, key)) : [],
+    );
+
+    return nestedRecords.length ? nestedRecords : [data];
+  }
+
+  #withSection(record: unknown, section: string): unknown {
+    if (!this.#isRecord(record)) return record;
+    return { section: this.#humanize(section), ...record };
   }
 
   #toCard(record: unknown, index: number): DisplayCard {
