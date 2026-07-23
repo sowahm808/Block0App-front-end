@@ -439,6 +439,11 @@ a {
   display: grid;
   gap: 0.9rem;
 }
+.auth-form mat-form-field,
+.auth-form .mat-mdc-form-field,
+.auth-form button {
+  width: 100%;
+}
 .auth-hero-panel {
   display: grid;
   gap: 1.2rem;
