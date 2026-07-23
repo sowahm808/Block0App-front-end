@@ -1,7 +1,13 @@
 import { HttpClient } from '@angular/common/http';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  GoogleAuthProvider,
+  reload,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from 'firebase/auth';
 import { inject, Injectable } from '@angular/core';
-import { from, map, Observable, switchMap, throwError } from 'rxjs';
+import { from, map, Observable, switchMap, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -32,7 +38,12 @@ export class FirebaseAuthService {
   #refreshToken: string | null = null;
 
   signInWithPassword(email: string, password: string): Observable<string> {
-    return this.#emailPasswordRequest('accounts:signInWithPassword', email, password);
+    return from(import('../firebase/firebase.config')).pipe(
+      switchMap(({ firebaseAuth }) => signInWithEmailAndPassword(firebaseAuth, email.trim().toLowerCase(), password)),
+      switchMap((credential) =>
+        from(credential.user.getIdToken()).pipe(tap(() => (this.#refreshToken = credential.user.refreshToken))),
+      ),
+    );
   }
 
   signUpWithPassword(email: string, password: string): Observable<string> {
@@ -82,6 +93,42 @@ export class FirebaseAuthService {
   resendEmailVerification(email: string, password: string): Observable<void> {
     return this.signInWithPassword(email.trim().toLowerCase(), password).pipe(
       switchMap((idToken) => this.sendEmailVerification(idToken)),
+    );
+  }
+
+  confirmCurrentUserEmailVerified(): Observable<string> {
+    return from(import('../firebase/firebase.config')).pipe(
+      switchMap(({ firebaseAuth }) => {
+        const user = firebaseAuth.currentUser;
+
+        if (!user) {
+          return throwError(() => new Error('Sign in before checking email verification.'));
+        }
+
+        return from(reload(user)).pipe(
+          switchMap(() => {
+            if (!user.emailVerified) {
+              return throwError(() => new Error('Your email is not verified yet.'));
+            }
+
+            return from(user.getIdToken(true));
+          }),
+        );
+      }),
+    );
+  }
+
+  resendCurrentUserEmailVerification(): Observable<void> {
+    return from(import('../firebase/firebase.config')).pipe(
+      switchMap(({ firebaseAuth }) => {
+        const user = firebaseAuth.currentUser;
+
+        if (!user) {
+          return throwError(() => new Error('Sign in before resending the verification email.'));
+        }
+
+        return from(sendEmailVerification(user)).pipe(map(() => void 0));
+      }),
     );
   }
 

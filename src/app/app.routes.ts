@@ -5,22 +5,65 @@ import { roleGuard } from './core/guards/role.guard';
 import { roleMatchGuard } from './core/guards/role-match.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { LandingPage } from './features/auth/landing.page';
-import { LoginPage, RegisterPage, SimpleAuthPage } from './features/auth/auth.pages';
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  SimpleAuthPage,
+  VerifyEmailPage,
+} from './features/auth/auth.pages';
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: LandingPage },
   { path: 'login', component: LoginPage, canActivate: [guestGuard] },
   { path: 'register', component: RegisterPage, canActivate: [guestGuard] },
-  { path: 'forgot-password', component: SimpleAuthPage },
+  { path: 'forgot-password', component: ForgotPasswordPage, canActivate: [guestGuard] },
   { path: 'reset-password', component: SimpleAuthPage },
-  { path: 'verify-email', component: SimpleAuthPage },
+  { path: 'verify-email', component: VerifyEmailPage },
   { path: 'unauthorized', component: SimpleAuthPage },
-  { path: 'account-disabled', loadComponent: () => import('./features/public-pages/account-disabled.page').then((m) => m.AccountDisabledPage) },
-  { path: 'terms', data: { title: 'Terms of use', description: 'Review the participation expectations, acceptable use guidelines, and learner responsibilities for the Block Zero Ready challenge.' }, loadComponent: () => import('./features/public-pages/public-info.page').then((m) => m.PublicInfoPage) },
-  { path: 'privacy', data: { title: 'Privacy policy', description: 'Learn how Mind Unlocking Academy handles challenge account data, readiness signals, certificates, and support communications.' }, loadComponent: () => import('./features/public-pages/public-info.page').then((m) => m.PublicInfoPage) },
-  { path: 'support', data: { title: 'Support', description: 'Get help with enrollment, sign-in, cohort access, certificates, or daily challenge participation.' }, loadComponent: () => import('./features/public-pages/public-info.page').then((m) => m.PublicInfoPage) },
-  { path: 'certificate/verify/:verificationCode', data: { apiPath: '/public/certificates/verify/:verificationCode' }, loadComponent: () => import('./features/public-pages/certificate-verification.page').then((m) => m.CertificateVerificationPage) },
-  { path: 'not-found', loadComponent: () => import('./features/public-pages/not-found.page').then((m) => m.NotFoundPage) },
-  { path: 'server-error', loadComponent: () => import('./features/public-pages/server-error.page').then((m) => m.ServerErrorPage) },
+  {
+    path: 'account-disabled',
+    loadComponent: () => import('./features/public-pages/account-disabled.page').then((m) => m.AccountDisabledPage),
+  },
+  {
+    path: 'terms',
+    data: {
+      title: 'Terms of use',
+      description:
+        'Review the participation expectations, acceptable use guidelines, and learner responsibilities for the Block Zero Ready challenge.',
+    },
+    loadComponent: () => import('./features/public-pages/public-info.page').then((m) => m.PublicInfoPage),
+  },
+  {
+    path: 'privacy',
+    data: {
+      title: 'Privacy policy',
+      description:
+        'Learn how Mind Unlocking Academy handles challenge account data, readiness signals, certificates, and support communications.',
+    },
+    loadComponent: () => import('./features/public-pages/public-info.page').then((m) => m.PublicInfoPage),
+  },
+  {
+    path: 'support',
+    data: {
+      title: 'Support',
+      description: 'Get help with enrollment, sign-in, cohort access, certificates, or daily challenge participation.',
+    },
+    loadComponent: () => import('./features/public-pages/public-info.page').then((m) => m.PublicInfoPage),
+  },
+  {
+    path: 'certificate/verify/:verificationCode',
+    data: { apiPath: '/public/certificates/verify/:verificationCode' },
+    loadComponent: () =>
+      import('./features/public-pages/certificate-verification.page').then((m) => m.CertificateVerificationPage),
+  },
+  {
+    path: 'not-found',
+    loadComponent: () => import('./features/public-pages/not-found.page').then((m) => m.NotFoundPage),
+  },
+  {
+    path: 'server-error',
+    loadComponent: () => import('./features/public-pages/server-error.page').then((m) => m.ServerErrorPage),
+  },
   {
     path: '',
     component: ShellComponent,

@@ -61,6 +61,17 @@ export class AuthService {
     return this.#api.post<void>('/auth/logout', {});
   }
 
+  confirmFirebaseEmailVerified() {
+    return this.#firebase.confirmCurrentUserEmailVerified().pipe(
+      switchMap((firebaseIdToken) => this.#api.post<TokenResponse>('/auth/firebase/resync', { firebaseIdToken })),
+      switchMap((r) => this.#setBackendTokens(r)),
+    );
+  }
+
+  resendCurrentUserEmailVerification() {
+    return this.#firebase.resendCurrentUserEmailVerification();
+  }
+
   forgotPassword(email: string) {
     return this.#api.post<void>('/auth/forgot-password', { email });
   }
