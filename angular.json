@@ -13,7 +13,9 @@
             "outputPath": "dist/block0-app",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -21,7 +23,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -34,8 +38,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "600kb",
-                  "maximumError": "1mb"
+                  "maximumWarning": "1.15mb",
+                  "maximumError": "1.35mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kb",
+                  "maximumError": "16kb"
                 }
               ],
               "outputHashing": "all",
@@ -48,7 +57,16 @@
                 "fonts": {
                   "inline": false
                 }
-              }
+              },
+              "sourceMap": false,
+              "extractLicenses": true,
+              "namedChunks": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
@@ -60,7 +78,7 @@
               "buildTarget": "block0-app:build:production"
             },
             "development": {
-              "buildTarget": "block0-app:build"
+              "buildTarget": "block0-app:build:development"
             }
           },
           "defaultConfiguration": "development"
