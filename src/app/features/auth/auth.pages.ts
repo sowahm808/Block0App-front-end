@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { DefaultLandingService } from '../../core/routing/default-landing.service';
 
 // ============================================================
 // Login
@@ -79,7 +80,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
             <div class="auth-divider"><span>or sign in with email</span></div>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field>
               <mat-label>Email</mat-label>
 
               <input matInput type="email" formControlName="email" autocomplete="email" />
@@ -91,7 +92,7 @@ import { AuthService } from '../../core/auth/auth.service';
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field>
               <mat-label>Password</mat-label>
 
               <input
@@ -148,6 +149,7 @@ export class LoginPage {
   readonly #auth = inject(AuthService);
   readonly #router = inject(Router);
   readonly #route = inject(ActivatedRoute);
+  readonly #landing = inject(DefaultLandingService);
 
   readonly busy = signal(false);
   readonly errorMessage = signal('');
@@ -189,7 +191,7 @@ export class LoginPage {
     this.#auth.loginWithGoogle().subscribe({
       next: () => {
         this.busy.set(false);
-        void this.#router.navigateByUrl('/dashboard');
+        void this.#router.navigateByUrl(this.#landing.defaultRoute());
       },
       error: (error: unknown) => {
         this.busy.set(false);
@@ -220,7 +222,7 @@ export class LoginPage {
       .subscribe({
         next: () => {
           this.busy.set(false);
-          void this.#router.navigateByUrl('/dashboard');
+          void this.#router.navigateByUrl(this.#landing.defaultRoute());
         },
 
         error: (error: unknown) => {

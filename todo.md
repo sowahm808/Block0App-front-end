@@ -10,7 +10,7 @@
 
 ## Remaining hardening
 
-- [ ] Replace generic JSON payload rendering with domain-designed templates as backend DTOs stabilize.
-- [ ] Expand unit coverage for every generated page shell.
-- [ ] Expand Playwright tests from route smoke coverage into complete workflow assertions once backend fixtures are available.
-- [ ] Re-run full checks after each follow-up phase.
+- [x] Replace generic JSON payload rendering with domain-designed templates as backend DTOs stabilize.
+- [x] Expand unit coverage for every generated page shell.
+- [x] Expand Playwright tests from route smoke coverage into complete workflow assertions once backend fixtures are available.
+- [x] Re-run full checks after each follow-up phase.
