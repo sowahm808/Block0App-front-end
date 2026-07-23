@@ -30,18 +30,22 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
     label: 'Scholar',
     roles: SCHOLAR_ROLES,
     items: [
-      { route: '/dashboard', label: 'Dashboard', icon: 'space_dashboard', exact: true, permissions: ['scholar:access'] },
-      { route: '/challenge/program', label: 'Program', icon: 'route', permissions: ['scholar:access'] },
-      { route: '/challenge/today', label: 'Today', icon: 'bolt', permissions: ['scholar:access'] },
+      {
+        route: '/dashboard',
+        label: 'Dashboard',
+        icon: 'space_dashboard',
+        exact: true,
+        permissions: ['scholar:access'],
+      },
+      { route: '/challenge/today', label: 'Today’s Challenge', icon: 'bolt', permissions: ['scholar:access'] },
       { route: '/learning-packs', label: 'Learning packs', icon: 'library_books', permissions: ['scholar:access'] },
       { route: '/capsules', label: 'Capsules', icon: 'auto_stories', permissions: ['scholar:access'] },
-      { route: '/scenarios', label: 'Scenarios', icon: 'psychology', permissions: ['scholar:access'] },
+      { route: '/scenarios', label: 'Clinical Scenarios', icon: 'psychology', permissions: ['scholar:access'] },
       { route: '/rehearsal', label: 'Rehearsal', icon: 'fitness_center', permissions: ['scholar:access'] },
       { route: '/check-ins', label: 'Check-ins', icon: 'fact_check', permissions: ['scholar:access'] },
-      { route: '/team', label: 'Team', icon: 'groups', permissions: ['scholar:access'] },
+      { route: '/team', label: 'My Team', icon: 'groups', permissions: ['scholar:access'] },
       { route: '/readiness', label: 'Readiness', icon: 'monitoring', permissions: ['scholar:access'] },
       { route: '/rewards', label: 'Rewards', icon: 'emoji_events', permissions: ['scholar:access'] },
-      { route: '/raffle-entries', label: 'Raffle entries', icon: 'confirmation_number', permissions: ['scholar:access'] },
       { route: '/certificates', label: 'Certificates', icon: 'workspace_premium', permissions: ['scholar:access'] },
     ],
   },
@@ -55,7 +59,12 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
       { route: '/review/scenarios', label: 'Scenarios', icon: 'psychology_alt', permissions: ['content.read'] },
       { route: '/review/ai-drafts', label: 'AI drafts', icon: 'smart_toy', permissions: ['content.review'] },
       { route: '/review/history', label: 'Review history', icon: 'history', permissions: ['content.read'] },
-      { route: '/review/import-learning-pack', label: 'Import learning pack', icon: 'upload_file', permissions: ['content.import'] },
+      {
+        route: '/review/import-learning-pack',
+        label: 'Import learning pack',
+        icon: 'upload_file',
+        permissions: ['content.import'],
+      },
     ],
   },
   {
@@ -64,7 +73,12 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
     items: [
       { route: '/mentor', label: 'Mentor dashboard', icon: 'school', exact: true, permissions: ['mentor.teams.read'] },
       { route: '/mentor/teams', label: 'Teams', icon: 'groups', permissions: ['mentor.teams.read'] },
-      { route: '/mentor/support-requests', label: 'Support requests', icon: 'support_agent', permissions: ['mentor.support.read'] },
+      {
+        route: '/mentor/support-requests',
+        label: 'Support requests',
+        icon: 'support_agent',
+        permissions: ['mentor.support.read'],
+      },
     ],
   },
   {
@@ -86,7 +100,7 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
   {
     label: 'Account',
     items: [
-      { route: '/notifications', label: 'Updates', icon: 'notifications' },
+      { route: '/notifications', label: 'Notifications', icon: 'notifications' },
       { route: '/profile', label: 'Profile', icon: 'account_circle' },
       { route: '/settings', label: 'Settings', icon: 'settings' },
       { route: '/notification-preferences', label: 'Notification preferences', icon: 'tune' },
@@ -94,7 +108,10 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
   },
 ];
 
-export const APP_NAVIGATION = APP_NAVIGATION_GROUPS.flatMap((group) => group.items).map((item) => ({ ...item, href: item.route }));
+export const APP_NAVIGATION = APP_NAVIGATION_GROUPS.flatMap((group) => group.items).map((item) => ({
+  ...item,
+  href: item.route,
+}));
 
 export function canShowNavigationItem(store: AuthStore, item: AppNavigationItem | AppNavigationGroup): boolean {
   const user = store.user();

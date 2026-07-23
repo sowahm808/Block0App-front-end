@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -18,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { interval, takeWhile } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { DefaultLandingService } from '../../core/routing/default-landing.service';
@@ -583,6 +585,219 @@ export class RegisterPage {
 }
 
 // ============================================================
+// Email verification
+// ============================================================
+
+@Component({
+  standalone: true,
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
+  template: `
+    <main class="auth-shell">
+      <mat-card class="auth-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar aria-hidden="true">mark_email_read</mat-icon>
+          <mat-card-title>Verify your email</mat-card-title>
+          <mat-card-subtitle>{{ emailAddress() || 'Use the email address from registration.' }}</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content class="grid gap-4">
+          <p>
+            We sent a verification link to the email address used during registration. Open that email and follow the
+            link to activate your Block0 account.
+          </p>
+          <p class="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            If you do not see the message, check your spam, junk, promotions, or quarantine folders before requesting
+            another email.
+          </p>
+
+          @if (successMessage()) {
+            <p class="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700" role="status">
+              {{ successMessage() }}
+            </p>
+          }
+          @if (errorMessage()) {
+            <p class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+              {{ errorMessage() }}
+            </p>
+          }
+
+          <div class="grid gap-2 sm:grid-cols-2">
+            <button mat-raised-button color="primary" type="button" [disabled]="busy()" (click)="confirmVerified()">
+              @if (busy()) {
+                <mat-progress-spinner mode="indeterminate" diameter="18" />
+              }
+              I Have Verified My Email
+            </button>
+            <button mat-stroked-button type="button" [disabled]="resendDisabled() || busy()" (click)="resend()">
+              {{ resendDisabled() ? 'Resend available in ' + resendCountdown() + 's' : 'Resend Verification Email' }}
+            </button>
+            <a mat-button routerLink="/register">Change Account</a>
+            <button mat-button type="button" (click)="signOut()">Sign Out</button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </main>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class VerifyEmailPage {
+  readonly #auth = inject(AuthService);
+  readonly #route = inject(ActivatedRoute);
+  readonly #router = inject(Router);
+  readonly #landing = inject(DefaultLandingService);
+  readonly #destroyRef = inject(DestroyRef);
+
+  readonly busy = signal(false);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
+  readonly resendCountdown = signal(0);
+  readonly resendDisabled = () => this.resendCountdown() > 0;
+  readonly emailAddress = signal(this.#route.snapshot.queryParamMap.get('email') ?? '');
+
+  confirmVerified(): void {
+    this.busy.set(true);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    this.#auth.confirmFirebaseEmailVerified().subscribe({
+      next: () => {
+        this.busy.set(false);
+        void this.#router.navigateByUrl(this.#landing.defaultRoute());
+      },
+      error: (error: unknown) => {
+        this.busy.set(false);
+        this.errorMessage.set(
+          buildEmailFlowErrorMessage(error, 'Your email is not verified yet. Check your inbox, then try again.'),
+        );
+      },
+    });
+  }
+
+  resend(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    this.#auth.resendCurrentUserEmailVerification().subscribe({
+      next: () => {
+        this.successMessage.set('Verification email sent. Please check your inbox and spam or junk folders.');
+        this.startResendCountdown();
+      },
+      error: (error: unknown) =>
+        this.errorMessage.set(
+          buildEmailFlowErrorMessage(error, 'We could not resend the verification email. Please try again later.'),
+        ),
+    });
+  }
+
+  startResendCountdown(): void {
+    this.resendCountdown.set(60);
+    interval(1000)
+      .pipe(
+        takeWhile(() => this.resendCountdown() > 0),
+        takeUntilDestroyed(this.#destroyRef),
+      )
+      .subscribe(() => {
+        this.resendCountdown.update((value) => Math.max(0, value - 1));
+      });
+  }
+
+  signOut(): void {
+    this.#auth.logout().subscribe({
+      complete: () => void this.#router.navigateByUrl('/login'),
+      error: () => void this.#router.navigateByUrl('/login'),
+    });
+  }
+}
+
+// ============================================================
+// Forgot password
+// ============================================================
+
+@Component({
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+  ],
+  template: `
+    <main class="auth-shell">
+      <mat-card class="auth-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar aria-hidden="true">lock_reset</mat-icon>
+          <mat-card-title>Reset your password</mat-card-title>
+          <mat-card-subtitle
+            >Enter your email and we will send reset instructions if the account exists.</mat-card-subtitle
+          >
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3" novalidate>
+            @if (successMessage()) {
+              <p class="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700" role="status">
+                {{ successMessage() }}
+              </p>
+            }
+            @if (errorMessage()) {
+              <p class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {{ errorMessage() }}
+              </p>
+            }
+            <mat-form-field>
+              <mat-label>Email address</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" required />
+              @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+                <mat-error>Email is required.</mat-error>
+              } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+                <mat-error>Enter a valid email address.</mat-error>
+              }
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
+              @if (busy()) {
+                <mat-progress-spinner mode="indeterminate" diameter="18" />
+              }
+              Send Reset Link
+            </button>
+            <a mat-button routerLink="/login">Return to Sign In</a>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </main>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ForgotPasswordPage {
+  readonly #fb = inject(FormBuilder);
+  readonly #auth = inject(AuthService);
+  readonly busy = signal(false);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
+  readonly form = this.#fb.nonNullable.group({ email: ['', [Validators.required, Validators.email]] });
+
+  submit(): void {
+    this.errorMessage.set('');
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.busy.set(true);
+    this.#auth.forgotPassword(this.form.controls.email.value.trim().toLowerCase()).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.successMessage.set('If an account exists for this email address, a reset link has been sent.');
+      },
+      error: () => {
+        this.busy.set(false);
+        this.successMessage.set('If an account exists for this email address, a reset link has been sent.');
+      },
+    });
+  }
+}
+
+// ============================================================
 // Simple authentication page
 // ============================================================
 
@@ -737,4 +952,14 @@ export function buildRegistrationErrorMessage(error: unknown): string {
   }
 
   return 'We could not create your account. ' + 'Please check your details and try again.' + supportReference;
+}
+
+function buildEmailFlowErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse && error.status === 429) {
+    return 'Too many requests. Please wait before requesting another verification email.';
+  }
+  if (error instanceof HttpErrorResponse) {
+    return error.error?.detail ?? error.error?.message ?? fallback;
+  }
+  return error instanceof Error && error.message ? error.message : fallback;
 }
