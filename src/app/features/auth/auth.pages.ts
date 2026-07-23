@@ -80,7 +80,7 @@ import { DefaultLandingService } from '../../core/routing/default-landing.servic
 
             <div class="auth-divider"><span>or sign in with email</span></div>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field>
               <mat-label>Email</mat-label>
 
               <input matInput type="email" formControlName="email" autocomplete="email" />
@@ -92,7 +92,7 @@ import { DefaultLandingService } from '../../core/routing/default-landing.servic
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field>
               <mat-label>Password</mat-label>
 
               <input
