@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: block0-app-front-end
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist/block0-app/browser
+    routes:
+      - type: rewrite
+        source: "/*"
+        destination: /index.html
