@@ -6,11 +6,39 @@ export interface ApiError {
   correlationId?: string;
   validationErrors?: Record<string, string[]>;
 }
-export interface LoginCredentials { email: string; password: string; mfaCode?: string; }
-export interface LoginRequest { email: string; password?: string; mfaCode?: string; firebaseIdToken?: string; }
-export interface RegisterRequest { displayName: string; email: string; password: string; }
-export interface RegisterResponse { userId: string; email: string; emailVerificationLink: string | null; }
-export interface TokenResponse { accessToken: string; expiresUtc: string; refreshToken: string; refreshExpiresUtc: string; tokenType: string; }
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  mfaCode?: string;
+}
+export interface LoginRequest {
+  email: string;
+  password?: string;
+  mfaCode?: string;
+  firebaseIdToken?: string;
+}
+export interface RegisterRequest {
+  displayName: string;
+  email: string;
+  password: string;
+  country: string;
+  timeZone: string;
+  primaryStudyDevice?: string | null;
+  acceptedTerms: boolean;
+  acceptedPrivacyPolicy: boolean;
+}
+export interface RegisterResponse {
+  userId: string;
+  email: string;
+  emailVerificationLink: string | null;
+}
+export interface TokenResponse {
+  accessToken: string;
+  expiresUtc: string;
+  refreshToken: string;
+  refreshExpiresUtc: string;
+  tokenType: string;
+}
 export type CurrentUserResponse = CurrentUser;
 
 export interface LearningPack {
@@ -28,7 +56,10 @@ export interface LearningPack {
   resources?: string[];
   continueUrl?: string;
 }
-export interface DashboardLearningPack extends LearningPack { progress?: number; readinessLevel?: string; }
+export interface DashboardLearningPack extends LearningPack {
+  progress?: number;
+  readinessLevel?: string;
+}
 export interface DashboardDto {
   scholarName: string;
   currentChallenge: string;
@@ -52,7 +83,11 @@ export interface DashboardDto {
   continueUrl?: string;
   stale?: boolean;
 }
-export interface Choice { id: string; label: string; text: string; }
+export interface Choice {
+  id: string;
+  label: string;
+  text: string;
+}
 export type AnswerChoiceDto = Choice;
 export interface CapsuleQuestion {
   attemptId: string;
@@ -66,7 +101,12 @@ export interface CapsuleQuestion {
   markedForReview: boolean;
 }
 export type W1QuestionDto = CapsuleQuestion;
-export interface QuestionSubmitRequest { choiceId: string; elapsedMs: number; markedForReview: boolean; submittedAtUtc?: string; }
+export interface QuestionSubmitRequest {
+  choiceId: string;
+  elapsedMs: number;
+  markedForReview: boolean;
+  submittedAtUtc?: string;
+}
 export interface QuestionSubmitResponse {
   selectedChoiceId: string;
   correctChoiceId: string;
@@ -93,8 +133,19 @@ export interface LearningPackImportRequest {
   sourceFileName?: string;
   learningPack: LearningPack;
   capsules: Array<{
-    externalId: string; title: string; summary?: string; sequence: number; estimatedMinutes?: number; status?: string;
-    questions: Array<{ externalId: string; sequence: number; stem: string; choices: Choice[]; explanation: QuestionSubmitResponse & { memory: QuestionSubmitResponse['memory'] } }>;
+    externalId: string;
+    title: string;
+    summary?: string;
+    sequence: number;
+    estimatedMinutes?: number;
+    status?: string;
+    questions: Array<{
+      externalId: string;
+      sequence: number;
+      stem: string;
+      choices: Choice[];
+      explanation: QuestionSubmitResponse & { memory: QuestionSubmitResponse['memory'] };
+    }>;
   }>;
 }
 export interface LearningPackImportSummary {

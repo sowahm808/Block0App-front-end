@@ -1,12 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -26,6 +36,9 @@ import { DefaultLandingService } from '../../core/routing/default-landing.servic
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatAutocompleteModule,
     MatProgressSpinnerModule,
   ],
   template: `
@@ -251,6 +264,48 @@ function buildGoogleLoginErrorMessage(error: unknown): string {
   return 'Google sign in was not completed. Please try again or use email and password.';
 }
 
+const SUPPORTED_COUNTRIES = [
+  { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'AU', name: 'Australia' },
+] as const;
+
+const PRIMARY_STUDY_DEVICES = ['phone', 'tablet', 'laptop', 'desktop'] as const;
+
+const SUPPORTED_TIME_ZONES = Intl.supportedValuesOf('timeZone');
+
+const supportedCountryValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+  SUPPORTED_COUNTRIES.some((country) => country.code === control.value) ? null : { supportedCountry: true };
+
+const studyDeviceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+  !control.value || PRIMARY_STUDY_DEVICES.includes(control.value) ? null : { studyDevice: true };
+
+const ianaTimeZoneValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+  SUPPORTED_TIME_ZONES.includes(control.value) ? null : { ianaTimeZone: true };
+
+const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const password = control.get('password')?.value;
+  const confirmPassword = control.get('confirmPassword');
+
+  if (!confirmPassword || password === confirmPassword.value) {
+    confirmPassword?.setErrors(removePasswordMismatch(confirmPassword.errors));
+    return null;
+  }
+
+  confirmPassword.setErrors({ ...confirmPassword.errors, passwordMismatch: true });
+  return { passwordMismatch: true };
+};
+
+function removePasswordMismatch(errors: ValidationErrors | null): ValidationErrors | null {
+  if (!errors?.['passwordMismatch']) {
+    return errors;
+  }
+
+  const { passwordMismatch: _passwordMismatch, ...remainingErrors } = errors;
+  return Object.keys(remainingErrors).length ? remainingErrors : null;
+}
+
 // ============================================================
 // Registration
 // ============================================================
@@ -265,6 +320,9 @@ function buildGoogleLoginErrorMessage(error: unknown): string {
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatAutocompleteModule,
     MatProgressSpinnerModule,
   ],
   template: `
@@ -284,15 +342,17 @@ function buildGoogleLoginErrorMessage(error: unknown): string {
             }
 
             <mat-form-field>
-              <mat-label>Name</mat-label>
+              <mat-label>Full name</mat-label>
 
               <input matInput formControlName="displayName" autocomplete="name" />
 
               @if (
                 form.controls.displayName.touched &&
-                (form.controls.displayName.hasError('required') || form.controls.displayName.hasError('pattern'))
+                (form.controls.displayName.hasError('required') ||
+                  form.controls.displayName.hasError('minlength') ||
+                  form.controls.displayName.hasError('maxlength'))
               ) {
-                <mat-error>Name is required.</mat-error>
+                <mat-error>Full name must be 2–100 characters.</mat-error>
               }
             </mat-form-field>
 
@@ -327,14 +387,97 @@ function buildGoogleLoginErrorMessage(error: unknown): string {
                 <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
 
-              <mat-hint>Use at least 12 characters.</mat-hint>
+              <mat-hint>Use at least 8 characters.</mat-hint>
 
               @if (form.controls.password.touched && form.controls.password.hasError('required')) {
                 <mat-error>Password is required.</mat-error>
               } @else if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
-                <mat-error> Password must be at least 12 characters. </mat-error>
+                <mat-error> Password must be at least 8 characters. </mat-error>
               }
             </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Confirm password</mat-label>
+
+              <input
+                matInput
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+              />
+
+              @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('required')) {
+                <mat-error>Confirm your password.</mat-error>
+              } @else if (
+                form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('passwordMismatch')
+              ) {
+                <mat-error>Passwords must match.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Country</mat-label>
+
+              <mat-select formControlName="country">
+                @for (country of supportedCountries; track country.code) {
+                  <mat-option [value]="country.code">{{ country.name }}</mat-option>
+                }
+              </mat-select>
+
+              @if (form.controls.country.touched && form.controls.country.hasError('required')) {
+                <mat-error>Country is required.</mat-error>
+              } @else if (form.controls.country.touched && form.controls.country.hasError('supportedCountry')) {
+                <mat-error>Select a supported country.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Time zone</mat-label>
+
+              <input matInput formControlName="timeZone" [matAutocomplete]="timeZoneOptions" autocomplete="off" />
+              <mat-autocomplete #timeZoneOptions="matAutocomplete">
+                @for (timeZone of filteredTimeZones(); track timeZone) {
+                  <mat-option [value]="timeZone">{{ timeZone }}</mat-option>
+                }
+              </mat-autocomplete>
+
+              <mat-hint>Start typing an IANA time zone, for example America/New_York.</mat-hint>
+
+              @if (form.controls.timeZone.touched && form.controls.timeZone.hasError('required')) {
+                <mat-error>Time zone is required.</mat-error>
+              } @else if (form.controls.timeZone.touched && form.controls.timeZone.hasError('ianaTimeZone')) {
+                <mat-error>Select a valid IANA time zone.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Primary study device</mat-label>
+
+              <mat-select formControlName="primaryStudyDevice">
+                <mat-option value="">No preference</mat-option>
+                @for (device of primaryStudyDevices; track device) {
+                  <mat-option [value]="device">{{ device }}</mat-option>
+                }
+              </mat-select>
+
+              @if (
+                form.controls.primaryStudyDevice.touched && form.controls.primaryStudyDevice.hasError('studyDevice')
+              ) {
+                <mat-error>Select phone, tablet, laptop, or desktop.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-checkbox formControlName="acceptedTerms">I accept the terms of service.</mat-checkbox>
+            @if (form.controls.acceptedTerms.touched && form.controls.acceptedTerms.hasError('required')) {
+              <mat-error>Terms acceptance is required.</mat-error>
+            }
+
+            <mat-checkbox formControlName="acceptedPrivacyPolicy">I accept the privacy policy.</mat-checkbox>
+            @if (
+              form.controls.acceptedPrivacyPolicy.touched && form.controls.acceptedPrivacyPolicy.hasError('required')
+            ) {
+              <mat-error>Privacy policy acceptance is required.</mat-error>
+            }
 
             <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
               {{ busy() ? 'Creating account…' : 'Create account' }}
@@ -357,11 +500,28 @@ export class RegisterPage {
   readonly errorMessage = signal('');
   readonly showPassword = signal(false);
 
-  readonly form = this.#fb.nonNullable.group({
-    displayName: ['', [Validators.required, Validators.pattern(/\S/)]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(12)]],
-  });
+  readonly supportedCountries = SUPPORTED_COUNTRIES;
+  readonly primaryStudyDevices = PRIMARY_STUDY_DEVICES;
+
+  readonly form = this.#fb.nonNullable.group(
+    {
+      displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]],
+      country: ['', [Validators.required, supportedCountryValidator]],
+      timeZone: ['', [Validators.required, ianaTimeZoneValidator]],
+      primaryStudyDevice: ['', studyDeviceValidator],
+      acceptedTerms: [false, Validators.requiredTrue],
+      acceptedPrivacyPolicy: [false, Validators.requiredTrue],
+    },
+    { validators: passwordMatchValidator },
+  );
+
+  readonly filteredTimeZones = () => {
+    const query = this.form.controls.timeZone.value.trim().toLowerCase();
+    return SUPPORTED_TIME_ZONES.filter((timeZone) => timeZone.toLowerCase().includes(query)).slice(0, 50);
+  };
 
   togglePassword(): void {
     this.showPassword.update((value) => !value);
@@ -377,7 +537,16 @@ export class RegisterPage {
 
     this.busy.set(true);
 
-    const { displayName, email, password } = this.form.getRawValue();
+    const {
+      displayName,
+      email,
+      password,
+      country,
+      timeZone,
+      primaryStudyDevice,
+      acceptedTerms,
+      acceptedPrivacyPolicy,
+    } = this.form.getRawValue();
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -386,6 +555,11 @@ export class RegisterPage {
         displayName: displayName.trim(),
         email: normalizedEmail,
         password,
+        country,
+        timeZone,
+        primaryStudyDevice: primaryStudyDevice || null,
+        acceptedTerms,
+        acceptedPrivacyPolicy,
       })
       .subscribe({
         next: () => {

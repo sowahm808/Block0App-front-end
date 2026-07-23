@@ -94,6 +94,11 @@ describe('AuthService backend auth integration', () => {
       displayName: 'Dr Example',
       email: 'doctor@example.com',
       password: 'a very safe password',
+      country: 'US',
+      timeZone: 'America/New_York',
+      primaryStudyDevice: 'laptop',
+      acceptedTerms: true,
+      acceptedPrivacyPolicy: true,
     };
 
     let userId = '';
@@ -183,7 +188,16 @@ describe('AuthService backend auth integration', () => {
 
   it('does not write to Firestore /users/{uid}', () => {
     auth
-      .register({ displayName: 'Dr Example', email: 'doctor@example.com', password: 'a very safe password' })
+      .register({
+        displayName: 'Dr Example',
+        email: 'doctor@example.com',
+        password: 'a very safe password',
+        country: 'US',
+        timeZone: 'America/New_York',
+        primaryStudyDevice: 'laptop',
+        acceptedTerms: true,
+        acceptedPrivacyPolicy: true,
+      })
       .subscribe();
     auth.login({ email: 'doctor@example.com', password: 'secret-password' }).subscribe();
 
