@@ -1,38 +1,50 @@
-import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
-import { ApiService } from '../../core/api/api.service';
-import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
-import { DataTemplateComponent } from '../../shared/components/data-template.component';
-
-interface ApiState<T> { status: 'loading' | 'loaded' | 'empty' | 'error'; data?: T; message?: string }
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { RehearsalSessionCard } from './rehearsal.models';
+import { RehearsalReasonBadgeComponent } from './rehearsal-reason-badge.component';
 
 @Component({
   selector: 'b0-rehearsal-card',
   standalone: true,
-  imports: [AsyncPipe, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
-  template: `<b0-page-header title="Rehearsal Card" description="Production component for Block Zero workflows." />
-  @if (state$ | async; as state) {
-    @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
-    @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load data.'" (retry)="reload()" /> }
-    @else if (state.status === 'empty') { <b0-empty-state title="No records available" message="The backend has no records for this view yet. Unsupported actions stay disabled until API support exists." /> }
-    @else { <b0-data-template [data]="state.data" ariaLabel="Rehearsal Card content" /> }
-  }`,
+  imports: [RouterLink, MatButtonModule, RehearsalReasonBadgeComponent],
+  template: `<article class="grid gap-4 rounded-3xl border border-[var(--b0-border)] bg-white p-5 shadow-sm">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 class="m-0 text-xl font-black">{{ session().title }}</h2>
+        <p class="m-0 mt-1 text-sm font-bold text-[var(--b0-text-muted)]">
+          {{ session().questionCount }} questions · {{ session().estimatedMinutes }} min estimated duration
+        </p>
+      </div>
+      <span class="rounded-full bg-[var(--b0-surface)] px-3 py-2 text-sm font-black">{{ statusLabel() }}</span>
+    </div>
+    <div>
+      <p class="m-0 mb-2 text-sm font-black uppercase tracking-[0.16em] text-[var(--b0-text-muted)]">Selection reasons</p>
+      <div class="flex flex-wrap gap-2">
+        @for (reason of session().selectionReasons; track reason) { <b0-rehearsal-reason-badge [reason]="reason" /> }
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @if (session().status === 'completed') {
+        <a mat-raised-button color="primary" [routerLink]="['/rehearsal', attemptId(), 'summary']">View Completed Session</a>
+      } @else if (session().status === 'in_progress') {
+        <a mat-raised-button color="primary" [routerLink]="['/rehearsal', attemptId()]">Resume Rehearsal</a>
+      } @else {
+        <button mat-raised-button color="primary" type="button" (click)="start.emit(session().id)">Start Rehearsal</button>
+      }
+    </div>
+  </article>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RehearsalCardComponent {
-  #api = inject(ApiService);
-  #route = inject(ActivatedRoute);
-  readonly state$ = this.#route.data.pipe(
-    switchMap((data) => this.#api.get<unknown>(String(data['apiPath'] ?? '/health')).pipe(
-      map((result) => ({ status: result ? 'loaded' : 'empty', data: result }) satisfies ApiState<unknown>),
-      startWith({ status: 'loading' } satisfies ApiState<unknown>),
-      catchError((error: unknown) => of({ status: 'error', message: error instanceof Error ? error.message : 'Backend endpoint is unavailable.' } satisfies ApiState<unknown>)),
-    )),
-  );
-  reload() { window.location.reload(); }
+  session = input.required<RehearsalSessionCard>();
+  start = output<string>();
+
+  attemptId() {
+    return this.session().attemptId ?? this.session().id;
+  }
+
+  statusLabel() {
+    return this.session().status.replace(/[_-]/g, ' ');
+  }
 }

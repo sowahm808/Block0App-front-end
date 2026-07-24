@@ -1,38 +1,38 @@
-import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
-import { ApiService } from '../../core/api/api.service';
-import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
-import { DataTemplateComponent } from '../../shared/components/data-template.component';
-
-interface ApiState<T> { status: 'loading' | 'loaded' | 'empty' | 'error'; data?: T; message?: string }
+import { KeyValuePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'b0-rehearsal-progress',
   standalone: true,
-  imports: [AsyncPipe, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
-  template: `<b0-page-header title="Rehearsal Progress" description="Production component for Block Zero workflows." />
-  @if (state$ | async; as state) {
-    @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
-    @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load data.'" (retry)="reload()" /> }
-    @else if (state.status === 'empty') { <b0-empty-state title="No records available" message="The backend has no records for this view yet. Unsupported actions stay disabled until API support exists." /> }
-    @else { <b0-data-template [data]="state.data" ariaLabel="Rehearsal Progress content" /> }
-  }`,
+  imports: [KeyValuePipe, MatProgressBarModule],
+  template: `<section class="rounded-3xl border border-[var(--b0-border)] bg-white p-4 shadow-sm" aria-label="Rehearsal progress">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="m-0 text-sm font-bold text-[var(--b0-text-muted)]">Current question</p>
+        <p class="m-0 text-2xl font-black">{{ currentQuestion() }} of {{ totalQuestions() }}</p>
+      </div>
+      <p class="m-0 text-sm font-bold text-[var(--b0-text-muted)]">Review category count</p>
+    </div>
+    <mat-progress-bar class="mt-3" [value]="percent()" aria-label="Question progress" />
+    <div class="mt-4 flex flex-wrap gap-2">
+      @for (item of reviewCategoryCounts() | keyvalue; track item.key) {
+        <span class="rounded-full bg-[var(--b0-surface)] px-3 py-2 text-sm font-bold">{{ categoryLabel(item.key) }}: {{ item.value }}</span>
+      }
+    </div>
+  </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RehearsalProgressComponent {
-  #api = inject(ApiService);
-  #route = inject(ActivatedRoute);
-  readonly state$ = this.#route.data.pipe(
-    switchMap((data) => this.#api.get<unknown>(String(data['apiPath'] ?? '/health')).pipe(
-      map((result) => ({ status: result ? 'loaded' : 'empty', data: result }) satisfies ApiState<unknown>),
-      startWith({ status: 'loading' } satisfies ApiState<unknown>),
-      catchError((error: unknown) => of({ status: 'error', message: error instanceof Error ? error.message : 'Backend endpoint is unavailable.' } satisfies ApiState<unknown>)),
-    )),
-  );
-  reload() { window.location.reload(); }
+  currentQuestion = input(1);
+  totalQuestions = input(1);
+  reviewCategoryCounts = input<Record<string, number>>({});
+
+  percent() {
+    return this.totalQuestions() ? (this.currentQuestion() / this.totalQuestions()) * 100 : 0;
+  }
+
+  categoryLabel(key: string) {
+    return key.replace(/[_-]/g, ' ');
+  }
 }
