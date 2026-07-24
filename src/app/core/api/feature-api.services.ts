@@ -54,6 +54,10 @@ export class CheckInsApiService extends CrudApi {
   constructor() {
     super('/check-ins');
   }
+
+  createMorning<T>(body: unknown) {
+    return this.api.post<T>('/check-ins/morning', body);
+  }
 }
 @Injectable({ providedIn: 'root' })
 export class TeamsApiService extends CrudApi {
