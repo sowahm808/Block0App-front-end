@@ -1,6 +1,6 @@
 [build]
   command = "npm run build"
-  publish = "dist/block0-app"
+  publish = "dist/block0-app/browser"
 
 [[redirects]]
   from = "/*"
