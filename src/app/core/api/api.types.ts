@@ -197,9 +197,16 @@ export interface CapsuleResume {
   title: string;
   summary?: string;
   learningPackTitle?: string;
+  capsuleNumber?: number;
+  sequence?: number;
   questionCount: number;
   completedQuestions: number;
   dailyTarget?: number;
+  remainingSeconds?: number;
+  timerRemainingSeconds?: number;
+  timeRemainingSeconds?: number;
+  elapsedSeconds?: number;
+  timerElapsedSeconds?: number;
   nextQuestion?: CapsuleQuestion;
   complete: boolean;
 }
