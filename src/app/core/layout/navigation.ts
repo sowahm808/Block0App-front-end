@@ -9,6 +9,8 @@ export interface AppNavigationItem {
   exact?: boolean;
   roles?: UserRole[];
   permissions?: Permission[];
+  showInSidebar?: boolean;
+  children?: AppNavigationItem[];
 }
 
 export interface AppNavigationGroup {
@@ -19,6 +21,7 @@ export interface AppNavigationGroup {
 }
 
 export type NavigationItem = AppNavigationItem;
+export type AppNavigationLink = AppNavigationItem & { href: string };
 
 export const SCHOLAR_ROLES: UserRole[] = ['Scholar'];
 export const REVIEW_ROLES: UserRole[] = ['ContentReviewer', 'Administrator', 'SuperAdministrator'];
@@ -38,15 +41,85 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
         permissions: ['scholar:access'],
       },
       { route: '/challenge/today', label: 'Today’s Challenge', icon: 'bolt', permissions: ['scholar:access'] },
-      { route: '/learning-packs', label: 'Learning packs', icon: 'library_books', permissions: ['scholar:access'] },
-      { route: '/capsules', label: 'Capsules', icon: 'auto_stories', permissions: ['scholar:access'] },
-      { route: '/scenarios', label: 'Clinical Scenarios', icon: 'psychology', permissions: ['scholar:access'] },
+      {
+        route: '/learning-packs',
+        label: 'Learning Packs',
+        icon: 'library_books',
+        permissions: ['scholar:access'],
+        children: [
+          {
+            route: '/learning-packs/:packId',
+            label: 'Learning Pack Detail',
+            icon: 'menu_book',
+            permissions: ['scholar:access'],
+            showInSidebar: false,
+            children: [
+              {
+                route: '/capsule-attempts/:attemptId',
+                label: 'Capsule Attempt',
+                icon: 'quiz',
+                permissions: ['scholar:access'],
+                showInSidebar: false,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        route: '/scenarios',
+        label: 'Clinical Scenarios',
+        icon: 'psychology',
+        permissions: ['scholar:access'],
+        children: [
+          {
+            route: '/scenario-attempts/:attemptId',
+            label: 'Scenario Attempt',
+            icon: 'assignment_turned_in',
+            permissions: ['scholar:access'],
+            showInSidebar: false,
+          },
+        ],
+      },
       { route: '/rehearsal', label: 'Rehearsal', icon: 'fitness_center', permissions: ['scholar:access'] },
-      { route: '/check-ins', label: 'Check-ins', icon: 'fact_check', permissions: ['scholar:access'] },
-      { route: '/team', label: 'My Team', icon: 'groups', permissions: ['scholar:access'] },
+      {
+        route: '/check-ins',
+        label: 'Check-Ins',
+        icon: 'fact_check',
+        permissions: ['scholar:access'],
+        children: [
+          { route: '/check-ins/morning', label: 'Morning', icon: 'wb_sunny', permissions: ['scholar:access'] },
+          { route: '/check-ins/evening', label: 'Evening', icon: 'nights_stay', permissions: ['scholar:access'] },
+          { route: '/check-ins/history', label: 'History', icon: 'history', permissions: ['scholar:access'] },
+        ],
+      },
+      {
+        route: '/team',
+        label: 'My Team',
+        icon: 'groups',
+        permissions: ['scholar:access'],
+        children: [
+          { route: '/team/support', label: 'Support Requests', icon: 'support_agent', permissions: ['scholar:access'] },
+        ],
+      },
       { route: '/readiness', label: 'Readiness', icon: 'monitoring', permissions: ['scholar:access'] },
-      { route: '/rewards', label: 'Rewards', icon: 'emoji_events', permissions: ['scholar:access'] },
+      {
+        route: '/rewards',
+        label: 'Rewards',
+        icon: 'emoji_events',
+        permissions: ['scholar:access'],
+        children: [
+          {
+            route: '/raffle-entries',
+            label: 'Raffle Entries',
+            icon: 'confirmation_number',
+            permissions: ['scholar:access'],
+          },
+        ],
+      },
       { route: '/certificates', label: 'Certificates', icon: 'workspace_premium', permissions: ['scholar:access'] },
+      { route: '/notifications', label: 'Notifications', icon: 'notifications', permissions: ['scholar:access'] },
+      { route: '/profile', label: 'Profile', icon: 'account_circle', permissions: ['scholar:access'] },
+      { route: '/settings', label: 'Settings', icon: 'settings', permissions: ['scholar:access'] },
     ],
   },
   {
@@ -99,6 +172,7 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
   },
   {
     label: 'Account',
+    roles: [...REVIEW_ROLES, ...MENTOR_ROLES, ...ADMIN_ROLES],
     items: [
       { route: '/notifications', label: 'Notifications', icon: 'notifications' },
       { route: '/profile', label: 'Profile', icon: 'account_circle' },
@@ -108,10 +182,13 @@ export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
   },
 ];
 
-export const APP_NAVIGATION = APP_NAVIGATION_GROUPS.flatMap((group) => group.items).map((item) => ({
-  ...item,
-  href: item.route,
-}));
+function flattenNavigationItems(items: readonly AppNavigationItem[]): AppNavigationLink[] {
+  return items.flatMap((item) => [{ ...item, href: item.route }, ...flattenNavigationItems(item.children ?? [])]);
+}
+
+export const APP_NAVIGATION: AppNavigationLink[] = APP_NAVIGATION_GROUPS.flatMap((group) =>
+  flattenNavigationItems(group.items),
+);
 
 export function canShowNavigationItem(store: AuthStore, item: AppNavigationItem | AppNavigationGroup): boolean {
   const user = store.user();
