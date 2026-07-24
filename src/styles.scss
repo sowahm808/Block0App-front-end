@@ -70,7 +70,9 @@ $dark-theme: mat.define-theme(
   --b0-motion-fast: 120ms;
   --b0-motion-base: 180ms;
   --b0-topbar: 64px;
+  --b0-mobile-nav-height: 5.75rem;
 }
+
 .theme-dark {
   color-scheme: dark;
   --b0-bg: #080b13;
@@ -196,6 +198,9 @@ a {
 .shell-main {
   min-height: calc(100vh - var(--b0-topbar));
   padding: clamp(1rem, 3vw, 2rem);
+}
+.mobile-bottom-nav {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 .page-header,
 .feature-hero {
@@ -587,9 +592,14 @@ a {
     grid-template-columns: 1fr auto;
   }
 }
+@media (max-width: 1023px) {
+  .shell-main {
+    padding-bottom: calc(var(--b0-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem);
+  }
+}
 @media (max-width: 639px) {
   .shell-main {
-    padding: 1rem;
+    padding: 1rem 1rem calc(var(--b0-mobile-nav-height) + env(safe-area-inset-bottom) + 1rem);
   }
   .mat-mdc-dialog-container {
     max-width: calc(100vw - 1rem) !important;
