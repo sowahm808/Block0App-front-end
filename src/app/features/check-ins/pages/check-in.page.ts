@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { JsonPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -291,6 +292,17 @@ interface EveningSummary {
           @if (kind() === 'evening') {
             <a mat-stroked-button routerLink="/dashboard">Return to Dashboard</a>
           }
+          <pre>
+Valid: {{ form.valid }}
+Invalid: {{ form.invalid }}
+
+{{ form.errors | json }}
+
+Confidence: {{ form.controls.confidence.valid }}
+Goal: {{ form.controls.goal.valid }}
+GoalMet: {{ form.controls.goalMet.valid }}
+Reflection: {{ form.controls.reflection.valid }}
+</pre>
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
             {{ busy() ? 'Submitting…' : submitLabel() }}
           </button>
@@ -465,6 +477,7 @@ selectGoalOutcome(
   this.form.controls.goalMet.markAsTouched();
   this.form.controls.goalMet.markAsDirty();
 }
+
 
   submit() {
     if (this.form.invalid) {
