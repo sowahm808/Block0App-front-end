@@ -215,6 +215,18 @@ export interface CapsuleResume {
   sequence?: number;
   questionCount: number;
   completedQuestions: number;
+  correctAnswers?: number;
+  completionTimeSeconds?: number;
+  completedAtUtc?: string;
+  markedForReviewCount?: number;
+  packProgress?: { completedCapsules: number; totalCapsules: number; progressPercentage?: number };
+  dailyGoalProgress?: { completedCapsules: number; targetCapsules: number; progressPercentage?: number };
+  reward?: { earnedRaffleEntry?: boolean; message?: string; raffleEntriesAwarded?: number };
+  learningPackId?: string;
+  nextCapsuleUrl?: string | null;
+  learningPackUrl?: string;
+  todayProgressUrl?: string;
+  endSessionUrl?: string;
   dailyTarget?: number;
   remainingSeconds?: number;
   timerRemainingSeconds?: number;
