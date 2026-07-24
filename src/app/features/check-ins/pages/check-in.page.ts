@@ -426,19 +426,19 @@ export class CheckInPage implements OnInit {
     this.loadEveningSummaryIfNeeded();
   }
 
-  selectConfidence(value: number) {
-    this.form.controls.confidence.setValue(value);
-    this.form.controls.confidence.markAsDirty();
-    this.form.controls.confidence.markAsTouched();
-    this.form.controls.confidence.updateValueAndValidity();
-  }
+  // selectConfidence(value: number) {
+  //   this.form.controls.confidence.setValue(value);
+  //   this.form.controls.confidence.markAsDirty();
+  //   this.form.controls.confidence.markAsTouched();
+  //   this.form.controls.confidence.updateValueAndValidity();
+  // }
 
-  selectGoalOutcome(value: (typeof GOAL_OUTCOMES)[number]) {
-    this.form.controls.goalMet.setValue(value);
-    this.form.controls.goalMet.markAsDirty();
-    this.form.controls.goalMet.markAsTouched();
-    this.form.controls.goalMet.updateValueAndValidity();
-  }
+  // selectGoalOutcome(value: (typeof GOAL_OUTCOMES)[number]) {
+  //   this.form.controls.goalMet.setValue(value);
+  //   this.form.controls.goalMet.markAsDirty();
+  //   this.form.controls.goalMet.markAsTouched();
+  //   this.form.controls.goalMet.updateValueAndValidity();
+  // }
 
   setNeedSupport(value: 'yes' | 'no') {
     this.form.controls.needSupport.setValue(value);
@@ -465,6 +465,7 @@ selectGoalOutcome(
   this.form.controls.goalMet.markAsTouched();
   this.form.controls.goalMet.markAsDirty();
 }
+
   submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
