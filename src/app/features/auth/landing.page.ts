@@ -40,7 +40,7 @@ import { MatCardModule } from '@angular/material/card';
         </p>
         <div class="grid gap-5">
           <h1 class="max-w-4xl text-4xl font-black tracking-tight text-slate-950 md:text-6xl">
-            Become Block Zero Ready in 21 Days
+            Become Block One Ready in 21 Days
           </h1>
           <p class="max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
             Build medical knowledge, clinical reasoning, confidence, and exam readiness through guided daily study.
