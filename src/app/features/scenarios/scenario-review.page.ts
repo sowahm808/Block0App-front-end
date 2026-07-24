@@ -1,38 +1,63 @@
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
-import { ApiService } from '../../core/api/api.service';
-import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
-import { DataTemplateComponent } from '../../shared/components/data-template.component';
-
-interface ApiState<T> { status: 'loading' | 'loaded' | 'empty' | 'error'; data?: T; message?: string }
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { map, switchMap } from 'rxjs';
+import { ScenarioDataService } from './scenario-data.service';
 
 @Component({
-  selector: 'b0-scenario-review',
   standalone: true,
-  imports: [AsyncPipe, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
-  template: `<b0-page-header title="Scenario Review" description="Production page for Block Zero workflows." />
-  @if (state$ | async; as state) {
-    @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
-    @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load data.'" (retry)="reload()" /> }
-    @else if (state.status === 'empty') { <b0-empty-state title="No records available" message="The backend has no records for this view yet. Unsupported actions stay disabled until API support exists." /> }
-    @else { <b0-data-template [data]="state.data" ariaLabel="Scenario Review content" /> }
-  }`,
+  imports: [AsyncPipe, DecimalPipe, RouterLink, MatButtonModule, MatCardModule],
+  template: `<section class="grid gap-5" aria-labelledby="review-title">
+    @if (review$ | async; as r) {
+      <header>
+        <p class="eyebrow">Scenario review</p>
+        <h1 id="review-title">Clinical Scenario Review</h1>
+        <p>
+          Overall score {{ r.overallScore | number: '1.0-0' }}% · {{ r.questionsCorrect }} of
+          {{ r.questionCount }} correct · Time taken {{ r.timeTaken }}
+        </p>
+      </header>
+      <mat-card class="p-5"
+        ><h2>Clinical domain performance</h2>
+        <div class="grid gap-3 md:grid-cols-2">
+          @for (d of r.clinicalDomainPerformance; track d.domain) {
+            <p class="m-0">
+              <b>{{ d.domain }}:</b> {{ d.score | number: '1.0-0' }}%
+            </p>
+          }
+        </div></mat-card
+      >
+      <div class="grid gap-4">
+        @for (q of r.questions; track q.id) {
+          <mat-card class="grid gap-3 p-5"
+            ><h2>Question</h2>
+            <p>{{ q.stem }}</p>
+            <p><b>Scholar answer:</b> {{ q.scholarAnswer }}</p>
+            <p><b>Correct answer:</b> {{ q.correctAnswer }}</p>
+            <p><b>Rationale:</b> {{ q.rationale }}</p>
+            <p><b>Clinical reasoning explanation:</b> {{ q.clinicalReasoningExplanation }}</p>
+            <p><b>Reference:</b> {{ q.reference }}</p></mat-card
+          >
+        }
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a mat-flat-button color="primary" routerLink="/scenarios">Return to Scenarios</a
+        ><a mat-stroked-button routerLink="/rehearsal">Review Weak Topics</a>
+        @if (r.rehearsalAvailable) {
+          <a mat-button routerLink="/rehearsal">Start Rehearsal</a>
+        }
+      </div>
+    }
+  </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScenarioReviewPage {
-  #api = inject(ApiService);
   #route = inject(ActivatedRoute);
-  readonly state$ = this.#route.data.pipe(
-    switchMap((data) => this.#api.get<unknown>(String(data['apiPath'] ?? '/health')).pipe(
-      map((result) => ({ status: result ? 'loaded' : 'empty', data: result }) satisfies ApiState<unknown>),
-      startWith({ status: 'loading' } satisfies ApiState<unknown>),
-      catchError((error: unknown) => of({ status: 'error', message: error instanceof Error ? error.message : 'Backend endpoint is unavailable.' } satisfies ApiState<unknown>)),
-    )),
+  #data = inject(ScenarioDataService);
+  review$ = this.#route.paramMap.pipe(
+    map((p) => p.get('attemptId') ?? ''),
+    switchMap((id) => this.#data.review(id)),
   );
-  reload() { window.location.reload(); }
 }
