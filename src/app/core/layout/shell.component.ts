@@ -79,6 +79,23 @@ import {
                       <span>{{ item.label }}</span>
                     }
                   </a>
+                  @if (!collapsed() || (isHandset$ | async)) {
+                    @for (child of item.children ?? []; track child.route) {
+                      @if (canShow(child)) {
+                        <a
+                          mat-button
+                          class="nav-link nav-sub-link"
+                          [routerLink]="child.route"
+                          routerLinkActive="active-nav"
+                          [routerLinkActiveOptions]="{ exact: child.exact ?? false }"
+                          (click)="closeHandset(drawer)"
+                        >
+                          <mat-icon aria-hidden="true">{{ child.icon }}</mat-icon>
+                          <span>{{ child.label }}</span>
+                        </a>
+                      }
+                    }
+                  }
                 }
               </section>
             }
@@ -180,7 +197,12 @@ export class ShellComponent {
   readonly visibleGroups = computed(() =>
     APP_NAVIGATION_GROUPS.map((group) => ({
       ...group,
-      items: group.items.filter((item) => this.canShow(item)),
+      items: group.items
+        .filter((item) => this.canShow(item))
+        .map((item) => ({
+          ...item,
+          children: item.children?.filter((child) => child.showInSidebar !== false && this.canShow(child)),
+        })),
     })).filter((group) => group.items.length > 0 && this.canShow(group)),
   );
   readonly homeRoute = computed(() => this.visibleGroups()[0]?.items[0]?.route ?? '/profile');
