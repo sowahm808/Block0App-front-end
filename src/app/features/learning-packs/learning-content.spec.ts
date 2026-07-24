@@ -21,7 +21,7 @@ describe('learning content UI', () => {
     await TestBed.configureTestingModule({ imports:[DashboardPage], providers:[provideNoopAnimations(), provideRouter([]), { provide: DashboardService, useValue: { getDashboard: () => of(dashboard) } }] }).compileComponents();
     const fixture = TestBed.createComponent(DashboardPage); fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Day 1 Foundations');
-    expect(fixture.nativeElement.textContent).toContain('Continue today’s capsule');
+    expect(fixture.nativeElement.textContent).toContain('Continue Studying');
   });
 
   it('learning-packs page renders backend records', async () => {

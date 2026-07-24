@@ -60,6 +60,8 @@ export interface DashboardLearningPack extends LearningPack {
   progress?: number;
   readinessLevel?: string;
 }
+export type DashboardEnrollmentState = 'active' | 'not_enrolled' | 'not_started' | 'completed';
+
 export interface DashboardDto {
   scholarName: string;
   currentChallenge: string;
@@ -79,6 +81,29 @@ export interface DashboardDto {
   announcements: string[];
   assignedLearningPacks?: Array<string | DashboardLearningPack>;
   dailyCapsuleGoal?: number;
+  dailyQuestionTarget?: number;
+  completedDays?: number;
+  academicScore?: number;
+  engagementScore?: number;
+  readinessLastUpdated?: string;
+  teamName?: string;
+  membersActiveToday?: number;
+  teamDailyCompletion?: number;
+  latestEncouragement?: string;
+  rewardsEarned?: number;
+  nextAvailableReward?: string;
+  requiredCapsules?: string;
+  scenarioAssignment?: string;
+  rehearsalAssignment?: string;
+  restDayInstructions?: string;
+  recentActivity?: string[];
+  enrollmentState?: DashboardEnrollmentState;
+  startDate?: string;
+  countdown?: string;
+  preparationChecklist?: string[];
+  completionMessage?: string;
+  certificateStatus?: string;
+  finalReadiness?: string;
   encouragementMessage?: string;
   continueUrl?: string;
   stale?: boolean;
