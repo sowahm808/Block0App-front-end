@@ -58,6 +58,14 @@ export class CheckInsApiService extends CrudApi {
   createMorning<T>(body: unknown) {
     return this.api.post<T>('/check-ins/morning', body);
   }
+
+  getEveningSummary<T>() {
+    return this.api.get<T>('/check-ins/evening/summary');
+  }
+
+  createEvening<T>(body: unknown) {
+    return this.api.post<T>('/check-ins/evening', body);
+  }
 }
 @Injectable({ providedIn: 'root' })
 export class TeamsApiService extends CrudApi {

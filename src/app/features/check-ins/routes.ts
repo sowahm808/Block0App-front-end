@@ -10,6 +10,12 @@ export default [
     canActivate: [roleGuard],
   },
   {
+    path: 'evening',
+    component: CheckInPage,
+    data: { roles: ['Scholar'], title: 'Evening Check-In', kind: 'evening' },
+    canActivate: [roleGuard],
+  },
+  {
     path: 'history',
     data: { roles: ['Scholar'], title: 'Check-in history', apiPath: '/check-ins/history' },
     canActivate: [roleGuard],
