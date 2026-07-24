@@ -195,6 +195,15 @@ a {
   background: color-mix(in srgb, var(--b0-primary) 14%, transparent) !important;
   color: var(--b0-primary) !important;
 }
+.nav-sub-link {
+  margin-left: 1.25rem !important;
+  width: calc(100% - 1.25rem) !important;
+  border-radius: 0.875rem !important;
+  font-size: 0.82rem !important;
+}
+.nav-sub-link mat-icon {
+  transform: scale(0.82);
+}
 .shell-main {
   min-height: calc(100vh - var(--b0-topbar));
   padding: clamp(1rem, 3vw, 2rem);
