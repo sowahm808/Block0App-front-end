@@ -106,12 +106,51 @@ export function sanitizeCapsuleResume(capsule: CapsuleResumeDto): CapsuleResumeD
           </div>
 
           @if (capsule.complete) {
-            <mat-card class="grid gap-3 p-4 sm:p-6">
-              <h2 class="m-0 text-2xl font-black">Capsule complete</h2>
-              <p class="m-0 text-[var(--b0-text-muted)]">Progress has been updated automatically.</p>
-              <button mat-raised-button color="primary" type="button" (click)="loadNextCapsule()" [disabled]="busy()">
-                {{ busy() ? 'Requesting…' : 'Request next capsule' }}
-              </button>
+            <mat-card class="grid gap-5 p-4 sm:p-6" aria-labelledby="capsule-complete-title">
+              <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p class="m-0 text-sm font-bold uppercase tracking-[0.2em] text-[var(--b0-primary)]">Completion summary</p>
+                  <h2 id="capsule-complete-title" class="m-0 mt-1 text-2xl font-black">Capsule completed</h2>
+                  <p class="m-0 mt-2 text-[var(--b0-text-muted)]">Progress has been updated automatically.</p>
+                </div>
+                @if (earnedRaffleEntry(capsule)) {
+                  <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950" role="status">
+                    <p class="m-0 text-sm font-black uppercase tracking-[0.16em]">Reward notification</p>
+                    <p class="m-0 mt-1 font-bold">{{ rewardMessage(capsule) }}</p>
+                  </div>
+                }
+              </div>
+
+              <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                @for (item of completionSummary(capsule); track item.label) {
+                  <div class="rounded-2xl border border-[var(--b0-border)] bg-[var(--b0-surface)] p-4">
+                    <p class="m-0 text-sm text-[var(--b0-text-muted)]">{{ item.label }}</p>
+                    <p class="m-0 mt-1 text-2xl font-black">{{ item.value }}</p>
+                  </div>
+                }
+              </div>
+
+              <div class="grid gap-3 rounded-2xl border border-[var(--b0-border)] p-4 sm:grid-cols-2">
+                <div>
+                  <p class="m-0 text-sm font-bold text-[var(--b0-text-muted)]">Pack progress</p>
+                  <p class="m-0 mt-1 text-xl font-black">{{ packProgressLabel(capsule) }}</p>
+                  <mat-progress-bar class="mt-3" [value]="packProgressValue(capsule)" aria-label="Pack progress" />
+                </div>
+                <div>
+                  <p class="m-0 text-sm font-bold text-[var(--b0-text-muted)]">Daily goal progress</p>
+                  <p class="m-0 mt-1 text-xl font-black">{{ dailyGoalProgressLabel(capsule) }}</p>
+                  <mat-progress-bar class="mt-3" [value]="dailyGoalProgressValue(capsule)" aria-label="Daily goal progress" />
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <button mat-raised-button color="primary" type="button" (click)="loadNextCapsule()" [disabled]="busy() || !capsule.nextCapsuleUrl">
+                  {{ busy() ? 'Starting…' : 'Start Next Capsule' }}
+                </button>
+                <a mat-stroked-button [routerLink]="learningPackLink(capsule)">Return to Learning Pack</a>
+                <a mat-stroked-button [routerLink]="endSessionLink(capsule)">End Study Session</a>
+                <a mat-stroked-button [routerLink]="todayProgressLink(capsule)">View Today’s Progress</a>
+              </div>
             </mat-card>
           } @else if (capsule.nextQuestion) {
             <b0-three-whisper
@@ -233,6 +272,75 @@ export class CapsulePage {
         this.#toast.error('Could not acknowledge the memory pearl.');
       },
     });
+  }
+
+  completionSummary(capsule: CapsuleResumeDto) {
+    return [
+      { label: 'Questions answered', value: `${capsule.completedQuestions ?? 0}/${capsule.questionCount || 4}` },
+      { label: 'Correct answers', value: this.correctAnswersLabel(capsule) },
+      { label: 'Completion time', value: this.completionTimeLabel(capsule) },
+      { label: 'Marked for review', value: `${capsule.markedForReviewCount ?? 0}` },
+      { label: 'Capsule completed', value: capsule.completedAtUtc ? new Date(capsule.completedAtUtc).toLocaleDateString() : 'Done' },
+    ];
+  }
+
+  correctAnswersLabel(capsule: CapsuleResumeDto) {
+    return typeof capsule.correctAnswers === 'number' ? `${capsule.correctAnswers}/${capsule.questionCount || capsule.completedQuestions}` : 'Pending';
+  }
+
+  completionTimeLabel(capsule: CapsuleResumeDto) {
+    const seconds = capsule.completionTimeSeconds ?? capsule.elapsedSeconds ?? capsule.timerElapsedSeconds;
+    return typeof seconds === 'number' ? this.formatSeconds(seconds) : 'Not tracked';
+  }
+
+  packProgressValue(capsule: CapsuleResumeDto) {
+    const progress = capsule.packProgress;
+    if (!progress) return this.progress(capsule);
+    return typeof progress.progressPercentage === 'number'
+      ? Math.max(0, Math.min(100, progress.progressPercentage))
+      : progress.totalCapsules
+        ? (progress.completedCapsules / progress.totalCapsules) * 100
+        : 0;
+  }
+
+  packProgressLabel(capsule: CapsuleResumeDto) {
+    const progress = capsule.packProgress;
+    return progress ? `${progress.completedCapsules} of ${progress.totalCapsules} capsules` : `${Math.round(this.progress(capsule))}% complete`;
+  }
+
+  dailyGoalProgressValue(capsule: CapsuleResumeDto) {
+    const progress = capsule.dailyGoalProgress;
+    if (!progress) return capsule.dailyTarget ? (capsule.completedQuestions / capsule.dailyTarget) * 100 : 0;
+    return typeof progress.progressPercentage === 'number'
+      ? Math.max(0, Math.min(100, progress.progressPercentage))
+      : progress.targetCapsules
+        ? (progress.completedCapsules / progress.targetCapsules) * 100
+        : 0;
+  }
+
+  dailyGoalProgressLabel(capsule: CapsuleResumeDto) {
+    const progress = capsule.dailyGoalProgress;
+    return progress ? `${progress.completedCapsules} of ${progress.targetCapsules} capsules` : 'Daily target updated';
+  }
+
+  earnedRaffleEntry(capsule: CapsuleResumeDto) {
+    return Boolean(capsule.reward?.earnedRaffleEntry);
+  }
+
+  rewardMessage(capsule: CapsuleResumeDto) {
+    return capsule.reward?.message || 'You earned a raffle entry for completing today’s capsule target.';
+  }
+
+  learningPackLink(capsule: CapsuleResumeDto) {
+    return capsule.learningPackUrl ?? (capsule.learningPackId ? `/learning-packs/${capsule.learningPackId}` : '/learning-packs');
+  }
+
+  todayProgressLink(capsule: CapsuleResumeDto) {
+    return capsule.todayProgressUrl ?? '/dashboard';
+  }
+
+  endSessionLink(capsule: CapsuleResumeDto) {
+    return capsule.endSessionUrl ?? '/dashboard';
   }
 
   loadNextQuestion() {
