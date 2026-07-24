@@ -18,9 +18,12 @@ import {
   standalone: true,
   imports: [MatButtonModule, MatCheckboxModule, MatRadioModule],
   template: `@if (machine(); as m) {
-    <article class="mx-auto max-w-3xl rounded bg-white p-4 shadow" aria-live="polite">
-      <p>Question {{ m.question.questionNumber }} • {{ m.question.capsuleProgress }}</p>
-      <h1 class="text-2xl font-semibold">{{ m.question.stem }}</h1>
+    <article class="mx-auto max-w-3xl rounded-3xl bg-white p-4 shadow sm:p-6" aria-live="polite">
+      <p class="m-0 text-sm font-black uppercase tracking-[0.18em] text-[var(--b0-primary)]">W1 — Challenge</p>
+      <p class="m-0 mt-2 text-sm font-bold text-[var(--b0-text-muted)]">
+        Question {{ m.question.questionNumber }} • {{ m.question.capsuleProgress }}
+      </p>
+      <h1 class="mt-3 text-2xl font-semibold">{{ m.question.stem }}</h1>
       @if (m.question.figureUrl) {
         <img class="my-4 rounded border" [src]="m.question.figureUrl" alt="Question figure" />
       }
@@ -99,7 +102,12 @@ export class ThreeWhisperComponent implements OnChanges {
     const currentAttemptId = this.question().attemptId;
 
     if (questionChanged && previousAttemptId !== currentAttemptId) {
-      this.machine.set({ state: 'Challenge', question: this.question(), startedAt: Date.now(), markedForReview: false });
+      this.machine.set({
+        state: 'Challenge',
+        question: this.question(),
+        startedAt: Date.now(),
+        markedForReview: this.question().markedForReview,
+      });
     }
   }
   choose(id: string) {
