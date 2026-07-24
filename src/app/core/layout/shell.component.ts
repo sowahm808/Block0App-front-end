@@ -142,11 +142,11 @@ import {
             </button>
           </mat-menu>
         </mat-toolbar>
-        <main id="main" class="shell-main mx-auto w-full max-w-[var(--b0-container)] pb-20 lg:pb-0">
+        <main id="main" class="shell-main mx-auto w-full max-w-[var(--b0-container)]">
           <router-outlet />
         </main>
         <nav
-          class="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-[var(--b0-border)] bg-[var(--b0-surface)] px-1 py-2 shadow-2xl lg:hidden"
+          class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-[var(--b0-border)] bg-[var(--b0-surface)] px-1 py-2 shadow-2xl lg:hidden"
           aria-label="Mobile navigation"
         >
           @for (item of mobileNavigation(); track item.route) {
