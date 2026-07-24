@@ -49,7 +49,7 @@ interface LearningPackListVm {
     </header>
 
     <mat-card class="grid gap-4 p-4" aria-label="Learning pack filters">
-      <div class="grid gap-3 md:grid-cols-5">
+      <div class="learning-pack-filters grid gap-3">
         <mat-form-field appearance="outline">
           <mat-label>Search</mat-label>
           <input matInput type="search" [formControl]="search" placeholder="Code, title, objective" />
@@ -162,6 +162,34 @@ interface LearningPackListVm {
       }
     }
   </section>`,
+  styles: [
+    `
+      .learning-pack-filters {
+        grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+        align-items: start;
+      }
+
+      .learning-pack-filters mat-form-field {
+        width: 100%;
+        min-width: 0;
+      }
+
+      :host ::ng-deep .learning-pack-filters .mat-mdc-form-field-flex {
+        align-items: center;
+      }
+
+      :host ::ng-deep .learning-pack-filters .mat-mdc-form-field-infix {
+        width: auto;
+        min-height: 3.5rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+
+      :host ::ng-deep .learning-pack-filters .mat-mdc-select-trigger {
+        min-height: 1.5rem;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LearningPacksPage {
