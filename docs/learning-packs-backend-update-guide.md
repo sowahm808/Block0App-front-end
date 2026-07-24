@@ -98,3 +98,113 @@ Only return an accuracy number when the current scholar is permitted to see it. 
 4. Return a deterministic recommended order, usually current-day packs first, then in-progress packs, then upcoming packs.
 5. Add backend tests for each filter value: `Not Started`, `In Progress`, `Completed`, `Locked`, and all availability states.
 6. Seed at least four packs in non-production environments so the frontend can verify each action label: Start Pack, Continue Pack, Review Pack, and View Details.
+
+# Learning Pack Detail Backend Update Guide
+
+The frontend route `/learning-packs/:packId` now renders a dedicated Learning Pack Detail page. Update the backend so `GET /learning-packs/{packId}` returns one scholar-specific pack with header metadata, progress, information sections, summary metrics, capsule rows, and action URLs.
+
+## Route and auth
+
+```http
+GET /learning-packs/{packId}
+Authorization: Bearer <access token>
+```
+
+`packId` may be either the backend `id` or `externalId` that was returned by `GET /learning-packs`. Return `404` when the pack does not exist and `403` when it exists but is not visible to the current scholar.
+
+## Response shape
+
+```json
+{
+  "id": "lp_cardiology_day_01",
+  "externalId": "cardiology-day-01",
+  "code": "LP01",
+  "title": "Cardiology Foundations",
+  "topic": "Cardiology",
+  "description": "Core high-yield rhythm, murmur, and medication review.",
+  "summary": "This pack reviews core cardiology patterns through five short capsules and targeted questions.",
+  "objectives": [
+    "Identify unstable arrhythmias and immediate interventions.",
+    "Match murmurs to maneuvers and lesion physiology.",
+    "Select first-line medication management for common presentations."
+  ],
+  "objectivesSummary": "Identify arrhythmias, murmurs, and first-line management.",
+  "status": "in_progress",
+  "progressStatus": "in_progress",
+  "availability": "available",
+  "availabilityStatus": "available",
+  "estimatedMinutes": 45,
+  "estimatedStudyMinutes": 45,
+  "capsuleCount": 5,
+  "totalCapsules": 5,
+  "completedCapsules": 2,
+  "questionCount": 20,
+  "totalQuestions": 20,
+  "completedQuestions": 8,
+  "questionsAnswered": 8,
+  "progressPercentage": 40,
+  "continueUrl": "/capsules/attempt-lp01-capsule-03",
+  "activeCapsuleUrl": "/capsules/attempt-lp01-capsule-03",
+  "nextCapsuleUrl": "/capsules/start/lp01-capsule-03",
+  "capsules": [
+    {
+      "id": "lp01-capsule-01",
+      "externalId": "cardiology-foundations-01",
+      "capsuleNumber": 1,
+      "sequence": 1,
+      "title": "Unstable arrhythmias",
+      "questionCount": 4,
+      "totalQuestions": 4,
+      "status": "completed",
+      "progressStatus": "completed",
+      "completedAtUtc": "2026-07-23T18:42:00Z",
+      "startUrl": "/capsules/lp01-capsule-01",
+      "continueUrl": "/capsules/attempt-lp01-capsule-01"
+    }
+  ]
+}
+```
+
+## Detail field contract
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `id` or `externalId` | Yes | Stable identifier used by `/learning-packs/:packId`. |
+| `code` | Recommended | Header pack code, for example `LP01`. |
+| `title` | Yes | Header pack title. |
+| `topic` | Yes | Header topic label. |
+| `progressPercentage` | Recommended | Header completion percentage. Frontend derives from capsule counts if absent. |
+| `objectives` | Yes | Ordered objective list for the Learning objectives section. |
+| `objectivesSummary` | Recommended | Fallback for list and search cards. |
+| `summary` or `description` | Yes | Pack summary section text. |
+| `capsuleCount` / `totalCapsules` | Yes | Total capsule summary metric. |
+| `completedCapsules` | Yes | Scholar-specific completed capsule metric. |
+| `questionCount` / `totalQuestions` | Yes | Total question summary metric. |
+| `completedQuestions` or `questionsAnswered` | Yes | Scholar-specific questions answered metric. |
+| `estimatedStudyMinutes` or `estimatedMinutes` | Yes | Estimated study time metric in minutes. |
+| `continueUrl` | When available | General continue URL; used as fallback for active capsule actions. |
+| `activeCapsuleUrl` | When in progress | Target for Continue Active Capsule. |
+| `nextCapsuleUrl` | When available | Target for Start Next Capsule. |
+| `capsules` | Yes | Ordered capsule row data for the capsule list. |
+
+## Capsule field contract
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `id` or `externalId` | Yes | Stable capsule identifier for fallback links. |
+| `capsuleNumber` or `sequence` | Yes | Displayed as Capsule number and used for ordering. |
+| `title` | Yes | Capsule row title. |
+| `questionCount` or `totalQuestions` | Yes | Number of questions shown in the row. |
+| `status` / `progressStatus` | Yes | Use `not_started`, `in_progress`, `completed`, or `locked`. |
+| `completedAtUtc` or `completedAt` | When completed | Completion date shown in the row. Omit or null for incomplete capsules. |
+| `startUrl` | When startable | URL for a not-started capsule. |
+| `continueUrl` | When active/reviewable | URL for a started or completed capsule. |
+
+## Detail implementation checklist
+
+1. Authorize access against the authenticated scholar's assignments, cohort release rules, prerequisites, and role permissions before returning detail data.
+2. Return capsules in ascending `sequence` order and ensure only one active capsule drives `activeCapsuleUrl`.
+3. Calculate summary metrics from persisted capsule and question attempt state, not from client-submitted percentages.
+4. Use UTC timestamps for `completedAtUtc`; the frontend can display the string until locale formatting is finalized.
+5. Add backend tests for not-started, in-progress, completed, locked, missing, and unauthorized pack detail responses.
+6. Keep list and detail field names aligned so the list page can link to the same `packId` accepted by the detail endpoint.
