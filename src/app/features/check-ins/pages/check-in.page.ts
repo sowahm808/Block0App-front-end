@@ -28,6 +28,7 @@ interface EveningSummary {
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    JsonPipe,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
