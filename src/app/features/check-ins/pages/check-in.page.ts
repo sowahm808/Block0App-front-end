@@ -84,7 +84,7 @@ interface EveningSummary {
             </mat-slider>
             <p class="text-sm font-bold text-[var(--b0-text)]">Selected: {{ form.controls.confidence.value }}/10</p>
           } @else {
-            <div class="flex flex-wrap gap-2" role="group" aria-label="Confidence level from 1 to 10">
+            <!-- <div class="flex flex-wrap gap-2" role="group" aria-label="Confidence level from 1 to 10">
               @for (level of confidenceLevels; track level) {
                 <button
                   type="button"
@@ -96,7 +96,29 @@ interface EveningSummary {
                   {{ level }}
                 </button>
               }
-            </div>
+            </div> -->
+            <div
+  class="choice-grid confidence-grid"
+  role="group"
+  aria-label="Confidence level from 1 to 10"
+>
+  @for (level of confidenceLevels; track level) {
+    <button
+      type="button"
+      mat-stroked-button
+      class="choice-button"
+      [class.choice-button--selected]="
+        form.controls.confidence.value === level
+      "
+      [attr.aria-pressed]="
+        form.controls.confidence.value === level
+      "
+      (click)="selectConfidence(level)"
+    >
+      {{ level }}
+    </button>
+  }
+</div>
           }
           <div class="grid gap-1 text-xs text-[var(--b0-muted)] sm:grid-cols-3">
             <span>1: Very low</span><span>5: Moderate</span><span>10: Very high</span>
@@ -169,7 +191,7 @@ interface EveningSummary {
             <legend class="text-sm font-bold text-[var(--b0-text)]">
               Did you meet today’s goal? <span aria-hidden="true">*</span>
             </legend>
-            <div class="flex flex-wrap gap-2" role="group" aria-label="Did you meet today’s goal?">
+            <!-- <div class="flex flex-wrap gap-2" role="group" aria-label="Did you meet today’s goal?">
               @for (outcome of goalOutcomes; track outcome) {
                 <button
                   type="button"
@@ -180,7 +202,30 @@ interface EveningSummary {
                   {{ outcome }}
                 </button>
               }
-            </div>
+            </div> -->
+
+            <div
+  class="choice-grid goal-outcome-grid"
+  role="group"
+  aria-label="Did you meet today’s goal?"
+>
+  @for (outcome of goalOutcomes; track outcome) {
+    <button
+      type="button"
+      mat-stroked-button
+      class="choice-button"
+      [class.choice-button--selected]="
+        form.controls.goalMet.value === outcome
+      "
+      [attr.aria-pressed]="
+        form.controls.goalMet.value === outcome
+      "
+      (click)="selectGoalOutcome(outcome)"
+    >
+      {{ outcome }}
+    </button>
+  }
+</div>
             <b0-form-field-error [control]="form.controls.goalMet" label="Goal outcome" />
           </fieldset>
 
@@ -242,6 +287,82 @@ interface EveningSummary {
       </form>
     </mat-card>
   </section>`,
+  styles: [`
+  .choice-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .confidence-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .goal-outcome-grid {
+    grid-template-columns: repeat(3, minmax(0, max-content));
+  }
+
+  .choice-button {
+    min-width: 0;
+    min-height: 3.5rem;
+    border: 2px solid var(--b0-border) !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: var(--b0-primary) !important;
+    font-weight: 800;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .choice-button:hover {
+    border-color: var(--b0-primary) !important;
+    background:
+      color-mix(
+        in srgb,
+        var(--b0-primary) 8%,
+        transparent
+      ) !important;
+  }
+
+  .choice-button--selected {
+    border-color: var(--b0-primary) !important;
+    background: var(--b0-primary) !important;
+    color: white !important;
+    box-shadow:
+      0 0 0 3px
+      color-mix(
+        in srgb,
+        var(--b0-primary) 20%,
+        transparent
+      );
+  }
+
+  .choice-button--selected:hover {
+    background: var(--b0-primary) !important;
+    color: white !important;
+  }
+
+  .choice-button:active {
+    transform: scale(0.97);
+  }
+
+  @media (max-width: 639px) {
+    .confidence-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .goal-outcome-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .choice-button {
+      min-height: 3rem;
+      padding-inline: 0.5rem;
+    }
+  }
+`],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckInPage implements OnInit {
@@ -311,7 +432,18 @@ export class CheckInPage implements OnInit {
     }
     this.form.controls.supportCategory.updateValueAndValidity();
   }
-
+selectConfidence(level: number): void {
+  this.form.controls.confidence.setValue(level);
+  this.form.controls.confidence.markAsTouched();
+  this.form.controls.confidence.markAsDirty();
+}
+selectGoalOutcome(
+  outcome: (typeof GOAL_OUTCOMES)[number],
+): void {
+  this.form.controls.goalMet.setValue(outcome);
+  this.form.controls.goalMet.markAsTouched();
+  this.form.controls.goalMet.markAsDirty();
+}
   submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
