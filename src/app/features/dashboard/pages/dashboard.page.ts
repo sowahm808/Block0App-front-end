@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { catchError, map, of, startWith } from 'rxjs';
+import { DashboardDto } from '../../../core/api/api.types';
 import { DashboardService } from '../data-access/dashboard.service';
 
 @Component({
@@ -31,141 +32,118 @@ import { DashboardService } from '../data-access/dashboard.service';
           </div>
         </mat-card>
       } @else if (vm.data) {
-        <div class="dashboard-hero">
-          <div class="hero-glow hero-glow-primary" aria-hidden="true"></div>
-          <div class="hero-glow hero-glow-accent" aria-hidden="true"></div>
-          <div class="hero-copy">
-            <p class="hero-kicker">Scholar command center</p>
-            <h1 id="dash-title">Study Day {{ vm.data.currentDay }} is ready</h1>
-            <p>
-              Welcome back, {{ vm.data.scholarName }}.
-              {{ vm.data.encouragementMessage || "Your study cockpit keeps today's focus, readiness signals, and team momentum in one place." }}
-            </p>
-            <div class="hero-actions">
-              <a mat-flat-button color="primary" [routerLink]="capsuleLink(vm.data.continueUrl)">Continue today’s capsule</a>
-              <a mat-button routerLink="/check-ins">Complete check-in</a>
-            </div>
-          </div>
-          <aside class="hero-panel" aria-label="Current challenge summary">
-            <p class="panel-label">Current challenge</p>
-            <h2>{{ vm.data.currentChallenge }}</h2>
-            <p class="panel-muted">Day {{ vm.data.currentDay }} · {{ vm.data.readinessLevel }} readiness</p>
-            <div class="progress-ring" [style.--progress.%]="vm.data.overallCompletion">
-              <span>{{ vm.data.overallCompletion }}%</span>
-            </div>
-            <p class="panel-caption">overall completion</p>
-            <p class="panel-muted">Daily capsule goal: {{ vm.data.dailyCapsuleGoal || vm.data.dailyTarget }}</p>
-          </aside>
-        </div>
-
-        <div class="metric-grid" aria-label="Dashboard metrics">
-          <mat-card class="metric-card metric-card-primary">
-            <p class="metric-label">Focus streak</p>
-            <p class="metric-value">{{ vm.data.currentStreak }}</p>
-            <p class="metric-copy">days of guided study momentum</p>
-          </mat-card>
-          <mat-card class="metric-card metric-card-success">
-            <p class="metric-label">Knowledge accuracy</p>
-            <p class="metric-value">{{ vm.data.knowledgeAccuracy }}%</p>
-            <p class="metric-copy">across recent question sets</p>
-          </mat-card>
-          <mat-card class="metric-card metric-card-warning">
-            <p class="metric-label">Scenario performance</p>
-            <p class="metric-value">{{ vm.data.scenarioPerformance }}%</p>
-            <p class="metric-copy">applied practice score</p>
-          </mat-card>
-          <mat-card class="metric-card metric-card-violet">
-            <p class="metric-label">Raffle entries</p>
-            <p class="metric-value">{{ vm.data.raffleEntries }}</p>
-            <p class="metric-copy">earned from consistency</p>
-          </mat-card>
-        </div>
-
-        <div class="content-grid">
-          <mat-card class="mission-card">
-            <div class="section-heading">
+        @switch (vm.data.enrollmentState || 'active') {
+          @case ('not_enrolled') {
+            <mat-card class="dashboard-state-card">
+              <div class="error-orb" aria-hidden="true">?</div>
               <div>
-                <p class="eyebrow">Today's mission</p>
-                <h2>Build momentum before the day closes</h2>
+                <p class="eyebrow">No enrollment</p>
+                <h1 id="dash-title" class="state-title">You are not currently enrolled in an active challenge.</h1>
+                <p class="state-copy">Contact support to confirm your cohort, challenge access, or next enrollment window.</p>
+                <a mat-flat-button color="primary" routerLink="/support">Contact Support</a>
               </div>
-              <span class="live-pill">Live plan</span>
-            </div>
-            <div class="daily-progress-card">
+            </mat-card>
+          }
+          @case ('not_started') {
+            <mat-card class="dashboard-state-card">
+              <div class="loading-orb" aria-hidden="true">⏱</div>
               <div>
-                <p class="daily-number">{{ vm.data.capsulesCompletedToday }} / {{ vm.data.dailyTarget }}</p>
-                <p class="daily-copy">capsules completed today</p>
+                <p class="eyebrow">Challenge not started</p>
+                <h1 id="dash-title" class="state-title">Your challenge begins {{ vm.data.startDate || 'soon' }}</h1>
+                <p class="state-copy">Countdown: {{ vm.data.countdown || 'Watch this space for your launch window.' }}</p>
+                <ul class="state-list">
+                  @for (item of vm.data.preparationChecklist || []; track item) { <li>{{ item }}</li> }
+                  @empty { <li>Review your orientation, notifications, and study schedule before day one.</li> }
+                </ul>
               </div>
-              <mat-progress-bar
-                [value]="(vm.data.capsulesCompletedToday / vm.data.dailyTarget) * 100"
-                aria-label="Daily capsule target progress"
-              ></mat-progress-bar>
+            </mat-card>
+          }
+          @case ('completed') {
+            <mat-card class="dashboard-state-card">
+              <div class="loading-orb" aria-hidden="true">★</div>
+              <div>
+                <p class="eyebrow">Challenge completed</p>
+                <h1 id="dash-title" class="state-title">{{ vm.data.completionMessage || 'Congratulations on completing the Block Zero Challenge.' }}</h1>
+                <p class="state-copy">Certificate status: {{ vm.data.certificateStatus || 'Pending review' }}</p>
+                <p class="state-copy">Final readiness: {{ vm.data.finalReadiness || vm.data.readinessLevel }}</p>
+                <a mat-flat-button color="primary" routerLink="/certificates">View Certificate</a>
+              </div>
+            </mat-card>
+          }
+          @default {
+            <div class="dashboard-hero">
+              <div class="hero-glow hero-glow-primary" aria-hidden="true"></div>
+              <div class="hero-glow hero-glow-accent" aria-hidden="true"></div>
+              <div class="hero-copy">
+                <p class="hero-kicker">Scholar Dashboard</p>
+                <h1 id="dash-title">Good Morning, {{ vm.data.scholarName }}</h1>
+                <p>Day {{ vm.data.currentDay }} of the Block Zero Challenge</p>
+                <div class="hero-actions">
+                  <a mat-flat-button color="primary" [routerLink]="capsuleLink(vm.data.continueUrl)">Continue Studying</a>
+                </div>
+              </div>
+              <aside class="hero-panel" aria-label="Current challenge summary">
+                <p class="panel-label">Challenge progress</p>
+                <h2>{{ vm.data.currentChallenge }}</h2>
+                <p class="panel-muted">Current day {{ vm.data.currentDay }} · {{ vm.data.completedDays ?? completedDays(vm.data) }} completed days</p>
+                <div class="progress-ring" [style.--progress.%]="vm.data.overallCompletion">
+                  <span>{{ vm.data.overallCompletion }}%</span>
+                </div>
+                <p class="panel-caption">overall percentage</p>
+                <p class="panel-muted">Current streak: {{ vm.data.currentStreak }} days</p>
+              </aside>
             </div>
-            <div class="task-list" aria-label="Daily tasks">
-              <div class="task-row">
-                <span class="task-status task-status-done" aria-hidden="true">✓</span>
-                <div>
-                  <p>{{ vm.data.questionsCompletedToday }} questions completed</p>
-                  <span>Question reps logged for today's practice block.</span>
+
+            <div class="metric-grid" aria-label="Dashboard summary cards">
+              <mat-card class="metric-card metric-card-primary wide-card">
+                <p class="metric-label">Daily target</p>
+                <p class="metric-value">{{ vm.data.capsulesCompletedToday }} / {{ vm.data.dailyTarget }}</p>
+                <p class="metric-copy">Capsules completed · Questions completed: {{ vm.data.questionsCompletedToday }} / {{ vm.data.dailyQuestionTarget ?? 60 }}</p>
+                <mat-progress-bar [value]="dailyProgress(vm.data)" aria-label="Daily target progress"></mat-progress-bar>
+                <p class="metric-copy">Remaining capsules: {{ remainingCapsules(vm.data) }}</p>
+              </mat-card>
+              <mat-card class="metric-card metric-card-success">
+                <p class="metric-label">Readiness</p>
+                <p class="metric-value">{{ vm.data.readinessLevel }}</p>
+                <p class="metric-copy">Academic score: {{ vm.data.academicScore ?? vm.data.knowledgeAccuracy }}%</p>
+                <p class="metric-copy">Engagement score: {{ vm.data.engagementScore ?? vm.data.scenarioPerformance }}%</p>
+                <p class="metric-copy">Last updated: {{ vm.data.readinessLastUpdated || 'Not yet available' }}</p>
+                <a mat-button routerLink="/readiness">View Readiness</a>
+              </mat-card>
+              <mat-card class="metric-card metric-card-warning">
+                <p class="metric-label">Check-in status</p>
+                <p class="metric-value">{{ vm.data.morningCheckInDone && vm.data.eveningCheckInDone ? 'Complete' : 'Pending' }}</p>
+                <p class="metric-copy">Morning check-in: {{ vm.data.morningCheckInDone ? 'Complete' : 'Pending' }}</p>
+                <p class="metric-copy">Evening check-in: {{ vm.data.eveningCheckInDone ? 'Complete' : 'Pending' }}</p>
+                <a mat-button routerLink="/check-ins">Complete Check-In</a>
+              </mat-card>
+              <mat-card class="metric-card metric-card-violet">
+                <p class="metric-label">Rewards</p>
+                <p class="metric-value">{{ vm.data.rewardsEarned ?? 0 }}</p>
+                <p class="metric-copy">Raffle entries: {{ vm.data.raffleEntries }}</p>
+                <p class="metric-copy">Next available reward: {{ vm.data.nextAvailableReward || 'Keep studying to unlock the next reward.' }}</p>
+                <a mat-button routerLink="/rewards">View Rewards</a>
+              </mat-card>
+            </div>
+
+            <div class="content-grid">
+              <mat-card class="mission-card">
+                <div class="section-heading"><div><p class="eyebrow">Today’s focus</p><h2>Your assigned work for day {{ vm.data.currentDay }}</h2></div><span class="live-pill">Today</span></div>
+                <div class="focus-grid">
+                  <div><p class="focus-label">Assigned learning packs</p><ul>@for (pack of vm.data.assignedLearningPacks || []; track pack) { <li>{{ learningPackTitle(pack) }}</li> } @empty { <li>No learning packs assigned yet.</li> }</ul></div>
+                  <div><p class="focus-label">Required capsules</p><p>{{ vm.data.requiredCapsules || remainingCapsules(vm.data) + ' capsules remaining' }}</p></div>
+                  <div><p class="focus-label">Scenario assignment</p><p>{{ vm.data.scenarioAssignment || 'No scenario assigned today.' }}</p></div>
+                  <div><p class="focus-label">Rehearsal assignment</p><p>{{ vm.data.rehearsalAssignment || 'No rehearsal assigned today.' }}</p></div>
+                  @if (vm.data.restDayInstructions) { <div class="rest-day"><p class="focus-label">Rest-day instructions</p><p>{{ vm.data.restDayInstructions }}</p></div> }
                 </div>
-              </div>
-              <div class="task-row">
-                <span class="task-status" [class.task-status-done]="vm.data.morningCheckInDone" aria-hidden="true">{{
-                  vm.data.morningCheckInDone ? '✓' : '•'
-                }}</span>
-                <div>
-                  <p>Morning check-in</p>
-                  <span>{{
-                    vm.data.morningCheckInDone ? 'Captured and synced.' : 'Still waiting for your first reflection.'
-                  }}</span>
-                </div>
-              </div>
-              <div class="task-row">
-                <span class="task-status" [class.task-status-done]="vm.data.eveningCheckInDone" aria-hidden="true">{{
-                  vm.data.eveningCheckInDone ? '✓' : '•'
-                }}</span>
-                <div>
-                  <p>Evening check-in</p>
-                  <span>{{
-                    vm.data.eveningCheckInDone ? 'Day closed with notes.' : 'Use it to lock in one learning takeaway.'
-                  }}</span>
-                </div>
+              </mat-card>
+              <div class="side-stack">
+                <mat-card class="team-card"><p class="eyebrow">Team summary</p><h2>{{ vm.data.teamName || 'Your team' }}</h2><p>Members active today: {{ vm.data.membersActiveToday ?? '—' }}</p><p>Team daily completion: {{ vm.data.teamDailyCompletion ?? 0 }}%</p><p>Latest encouragement: {{ vm.data.latestEncouragement || vm.data.teamActivity }}</p><a mat-button routerLink="/team">Open Team</a></mat-card>
+                <mat-card class="announcements-card"><div class="section-heading compact"><h2>Recent activity</h2><span class="live-pill">Live</span></div><ul>@for (activity of recentActivity(vm.data); track activity) { <li>{{ activity }}</li> }</ul></mat-card>
               </div>
             </div>
-          </mat-card>
-
-          <div class="side-stack">
-            <mat-card class="team-card">
-              <p class="eyebrow">Team pulse</p>
-              <h2>{{ vm.data.teamActivity }}</h2>
-              <p>Stay aligned with your cohort by turning shared activity into accountable next steps.</p>
-            </mat-card>
-
-            <mat-card class="announcements-card">
-              <div class="section-heading compact">
-                <h2>Assigned learning packs</h2>
-                <span class="live-pill">Today</span>
-              </div>
-              <ul>
-                @for (pack of vm.data.assignedLearningPacks || []; track pack) {
-                  <li>{{ learningPackTitle(pack) }}</li>
-                } @empty {
-                  <li>Your assigned packs will appear here when the daily plan syncs.</li>
-                }
-              </ul>
-            </mat-card>
-            <mat-card class="announcements-card">
-              <div class="section-heading compact">
-                <h2>Announcements</h2>
-                <span class="live-pill">Live</span>
-              </div>
-              <ul>
-                @for (a of vm.data.announcements; track a) {
-                  <li>{{ a }}</li>
-                }
-              </ul>
-            </mat-card>
-          </div>
-        </div>
+          }
+        }
       }
     }
   </section>`,
@@ -509,4 +487,28 @@ export class DashboardPage {
     return typeof pack === 'string' ? pack : (pack.title ?? pack.externalId ?? 'Assigned learning pack');
   }
 
+  dailyProgress(data: DashboardDto) {
+    return data.dailyTarget ? Math.min(100, (data.capsulesCompletedToday / data.dailyTarget) * 100) : 0;
+  }
+
+  remainingCapsules(data: DashboardDto) {
+    return Math.max((data.dailyTarget || 0) - (data.capsulesCompletedToday || 0), 0);
+  }
+
+  completedDays(data: DashboardDto) {
+    return Math.max((data.currentDay || 1) - 1, 0);
+  }
+
+  recentActivity(data: DashboardDto) {
+    return data.recentActivity?.length
+      ? data.recentActivity
+      : [
+          `Capsule completed: ${data.capsulesCompletedToday} today`,
+          `Reward earned: ${data.rewardsEarned ?? 0} total`,
+          `Teammate encouragement: ${data.latestEncouragement || data.teamActivity}`,
+          `Readiness update: ${data.readinessLevel}`,
+          'Support response: No new support responses',
+        ];
+  }
 }
+
