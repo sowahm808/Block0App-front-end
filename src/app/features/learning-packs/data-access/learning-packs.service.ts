@@ -8,4 +8,7 @@ export class LearningPacksService {
   list() {
     return this.#api.get<LearningPack[]>('/learning-packs');
   }
+  detail(packId: string) {
+    return this.#api.get<LearningPack>(`/learning-packs/${encodeURIComponent(packId)}`);
+  }
 }

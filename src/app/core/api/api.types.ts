@@ -41,6 +41,22 @@ export interface TokenResponse {
 }
 export type CurrentUserResponse = CurrentUser;
 
+export interface LearningPackCapsule {
+  id?: string;
+  externalId?: string;
+  capsuleNumber?: number;
+  sequence?: number;
+  title: string;
+  questionCount?: number;
+  totalQuestions?: number;
+  status?: string;
+  progressStatus?: string;
+  completedAt?: string;
+  completedAtUtc?: string;
+  startUrl?: string;
+  continueUrl?: string;
+}
+
 export interface LearningPack {
   id?: string;
   externalId?: string;
@@ -49,6 +65,8 @@ export interface LearningPack {
   description?: string;
   topic?: string;
   objectivesSummary?: string;
+  objectives?: string[];
+  summary?: string;
   challengeId?: string;
   dayNumber?: number;
   audience?: string;
@@ -57,12 +75,14 @@ export interface LearningPack {
   availability?: string;
   availabilityStatus?: string;
   estimatedMinutes?: number;
+  estimatedStudyMinutes?: number;
   capsuleCount?: number;
   totalCapsules?: number;
   completedCapsules?: number;
   questionCount?: number;
   totalQuestions?: number;
   completedQuestions?: number;
+  questionsAnswered?: number;
   accuracy?: number;
   accuracyPercentage?: number;
   accuracyPermitted?: boolean;
@@ -70,6 +90,9 @@ export interface LearningPack {
   progressPercentage?: number;
   resources?: string[];
   continueUrl?: string;
+  nextCapsuleUrl?: string;
+  activeCapsuleUrl?: string;
+  capsules?: LearningPackCapsule[];
 }
 export interface DashboardLearningPack extends LearningPack {
   progress?: number;
