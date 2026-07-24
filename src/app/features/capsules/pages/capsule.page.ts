@@ -118,7 +118,7 @@ export function sanitizeCapsuleResume(capsule: CapsuleResumeDto): CapsuleResumeD
               #whisper
               [question]="capsule.nextQuestion"
               (submitAnswer)="submit(capsule, $event, whisper)"
-              (completed)="loadNextQuestion()"
+              (acknowledgeMemory)="acknowledgeMemory($event.attemptId, whisper)"
             />
           }
         </main>
@@ -215,6 +215,22 @@ export class CapsulePage {
       error: () => {
         this.busy.set(false);
         this.#toast.error('Could not submit answer.');
+      },
+    });
+  }
+
+  acknowledgeMemory(questionAttemptId: string, whisper: ThreeWhisperComponent) {
+    this.busy.set(true);
+    this.#capsules.acknowledgeMemory(questionAttemptId).subscribe({
+      next: () => {
+        this.busy.set(false);
+        whisper.completeAcknowledgement();
+        this.loadNextQuestion();
+      },
+      error: () => {
+        this.busy.set(false);
+        whisper.failAcknowledgement();
+        this.#toast.error('Could not acknowledge the memory pearl.');
       },
     });
   }

@@ -164,31 +164,45 @@ export interface Choice {
   text: string;
 }
 export type AnswerChoiceDto = Choice;
+export type QuestionAnswerType = 'single_answer' | 'multiple_select' | 'numeric' | 'short_response';
 export interface CapsuleQuestion {
   attemptId: string;
   stem: string;
   choices: Choice[];
   questionNumber: number;
   capsuleProgress: string;
+  answerType?: QuestionAnswerType;
+  minSelections?: number;
+  maxSelections?: number;
+  unit?: string;
+  maxLength?: number;
   figureUrl?: string;
+  figureAlt?: string;
   tableHtml?: string;
   supportingMediaUrl?: string;
   markedForReview: boolean;
 }
 export type W1QuestionDto = CapsuleQuestion;
 export interface QuestionSubmitRequest {
-  choiceId: string;
+  choiceId?: string;
+  choiceIds?: string[];
+  numericAnswer?: number | string | null;
+  shortAnswer?: string;
   elapsedMs: number;
   markedForReview: boolean;
   submittedAtUtc?: string;
 }
 export interface QuestionSubmitResponse {
   selectedChoiceId: string;
+  selectedChoiceIds?: string[];
   correctChoiceId: string;
+  correctChoiceIds?: string[];
   correct: boolean;
   correctRationale: string;
   incorrectRationales: Record<string, string>;
   reference?: string;
+  referenceTitle?: string;
+  referenceUrl?: string;
   memory: { highYieldFact: string; pearl: string; clinicalRelevance: string; examTrap: string; mnemonic?: string };
 }
 export type QuestionSubmitResult = QuestionSubmitResponse;
