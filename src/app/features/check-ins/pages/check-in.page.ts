@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -91,7 +91,9 @@ interface EveningSummary {
                   mat-stroked-button
                   [color]="form.controls.confidence.value === level ? 'primary' : undefined"
                   [class.border-[var(--b0-primary)]]="form.controls.confidence.value === level"
-                  (click)="form.controls.confidence.setValue(level)"
+                  [class.bg-[var(--b0-primary-soft)]]="form.controls.confidence.value === level"
+                  [attr.aria-pressed]="form.controls.confidence.value === level"
+                  (click)="selectConfidence(level)"
                 >
                   {{ level }}
                 </button>
@@ -121,6 +123,9 @@ interface EveningSummary {
                 type="button"
                 mat-stroked-button
                 [color]="form.controls.needSupport.value === 'yes' ? 'primary' : undefined"
+                [class.border-[var(--b0-primary)]]="form.controls.needSupport.value === 'yes'"
+                [class.bg-[var(--b0-primary-soft)]]="form.controls.needSupport.value === 'yes'"
+                [attr.aria-pressed]="form.controls.needSupport.value === 'yes'"
                 (click)="setNeedSupport('yes')"
               >
                 Yes
@@ -129,6 +134,9 @@ interface EveningSummary {
                 type="button"
                 mat-stroked-button
                 [color]="form.controls.needSupport.value === 'no' ? 'primary' : undefined"
+                [class.border-[var(--b0-primary)]]="form.controls.needSupport.value === 'no'"
+                [class.bg-[var(--b0-primary-soft)]]="form.controls.needSupport.value === 'no'"
+                [attr.aria-pressed]="form.controls.needSupport.value === 'no'"
                 (click)="setNeedSupport('no')"
               >
                 No
@@ -175,7 +183,10 @@ interface EveningSummary {
                   type="button"
                   mat-stroked-button
                   [color]="form.controls.goalMet.value === outcome ? 'primary' : undefined"
-                  (click)="form.controls.goalMet.setValue(outcome)"
+                  [class.border-[var(--b0-primary)]]="form.controls.goalMet.value === outcome"
+                  [class.bg-[var(--b0-primary-soft)]]="form.controls.goalMet.value === outcome"
+                  [attr.aria-pressed]="form.controls.goalMet.value === outcome"
+                  (click)="selectGoalOutcome(outcome)"
                 >
                   {{ outcome }}
                 </button>
@@ -256,6 +267,7 @@ export class CheckInPage implements OnInit {
   goalOutcomes = GOAL_OUTCOMES;
   eveningSummary = signal<EveningSummary | null>(null);
   summaryError = signal('');
+  #eveningSummaryRequested = false;
   description = computed(() =>
     this.kind() === 'morning'
       ? 'Set today’s capsule target, confidence signal, and support needs before studying.'
@@ -285,23 +297,32 @@ export class CheckInPage implements OnInit {
     reflection: ['', noteValidators],
   });
 
+  constructor() {
+    effect(() => this.configureFormForKind(this.kind()));
+  }
+
   ngOnInit() {
-    if (this.kind() === 'evening') {
-      this.form.controls.needSupport.clearValidators();
-      this.form.controls.needSupport.updateValueAndValidity();
-      this.#api.getEveningSummary<EveningSummary>().subscribe({
-        next: (summary) => this.eveningSummary.set(summary),
-        error: () =>
-          this.summaryError.set('Could not load tracked progress yet. You can still submit your reflection.'),
-      });
-    } else {
-      this.form.controls.goalMet.clearValidators();
-      this.form.controls.goalMet.updateValueAndValidity();
-    }
+    this.loadEveningSummaryIfNeeded();
+  }
+
+  selectConfidence(value: number) {
+    this.form.controls.confidence.setValue(value);
+    this.form.controls.confidence.markAsDirty();
+    this.form.controls.confidence.markAsTouched();
+    this.form.controls.confidence.updateValueAndValidity();
+  }
+
+  selectGoalOutcome(value: (typeof GOAL_OUTCOMES)[number]) {
+    this.form.controls.goalMet.setValue(value);
+    this.form.controls.goalMet.markAsDirty();
+    this.form.controls.goalMet.markAsTouched();
+    this.form.controls.goalMet.updateValueAndValidity();
   }
 
   setNeedSupport(value: 'yes' | 'no') {
     this.form.controls.needSupport.setValue(value);
+    this.form.controls.needSupport.markAsDirty();
+    this.form.controls.needSupport.markAsTouched();
     if (value === 'yes') {
       this.form.controls.supportCategory.addValidators(Validators.required);
     } else {
@@ -354,6 +375,35 @@ export class CheckInPage implements OnInit {
         this.message.set('Could not submit yet. Confirm the API is available and try again.');
         this.#toast.error('Could not submit check-in.');
       },
+    });
+  }
+
+  private configureFormForKind(kind: 'morning' | 'evening') {
+    if (kind === 'evening') {
+      this.form.controls.needSupport.clearValidators();
+      this.form.controls.needSupport.updateValueAndValidity();
+      this.form.controls.supportCategory.clearValidators();
+      this.form.controls.supportCategory.updateValueAndValidity();
+      this.form.controls.goalMet.setValidators(Validators.required);
+      this.form.controls.goalMet.updateValueAndValidity();
+      this.loadEveningSummaryIfNeeded();
+      return;
+    }
+
+    this.form.controls.needSupport.setValidators(Validators.required);
+    this.form.controls.needSupport.updateValueAndValidity();
+    this.form.controls.goalMet.clearValidators();
+    this.form.controls.goalMet.updateValueAndValidity();
+  }
+
+  private loadEveningSummaryIfNeeded() {
+    if (this.kind() !== 'evening' || this.#eveningSummaryRequested) {
+      return;
+    }
+    this.#eveningSummaryRequested = true;
+    this.#api.getEveningSummary<EveningSummary>().subscribe({
+      next: (summary) => this.eveningSummary.set(summary),
+      error: () => this.summaryError.set('Could not load tracked progress yet. You can still submit your reflection.'),
     });
   }
 
