@@ -293,17 +293,7 @@ interface EveningSummary {
           @if (kind() === 'evening') {
             <a mat-stroked-button routerLink="/dashboard">Return to Dashboard</a>
           }
-          <pre>
-Valid: {{ form.valid }}
-Invalid: {{ form.invalid }}
 
-{{ form.errors | json }}
-
-Confidence: {{ form.controls.confidence.valid }}
-Goal: {{ form.controls.goal.valid }}
-GoalMet: {{ form.controls.goalMet.valid }}
-Reflection: {{ form.controls.reflection.valid }}
-</pre>
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || busy()">
             {{ busy() ? 'Submitting…' : submitLabel() }}
           </button>
@@ -466,83 +456,220 @@ export class CheckInPage implements OnInit {
     }
     this.form.controls.supportCategory.updateValueAndValidity();
   }
-selectConfidence(level: number): void {
+
+  selectConfidence(level: number): void {
   this.form.controls.confidence.setValue(level);
-  this.form.controls.confidence.markAsTouched();
   this.form.controls.confidence.markAsDirty();
+  this.form.controls.confidence.markAsTouched();
+  this.form.controls.confidence.updateValueAndValidity();
 }
+
 selectGoalOutcome(
   outcome: (typeof GOAL_OUTCOMES)[number],
 ): void {
   this.form.controls.goalMet.setValue(outcome);
-  this.form.controls.goalMet.markAsTouched();
   this.form.controls.goalMet.markAsDirty();
+  this.form.controls.goalMet.markAsTouched();
+  this.form.controls.goalMet.updateValueAndValidity();
+
+  this.form.updateValueAndValidity();
 }
 
 
-  submit() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const value = this.form.getRawValue();
-    const payload = {
-      kind: this.kind(),
-      confidence: value.confidence,
-      goal: value.goal,
-      ...(this.kind() === 'morning'
-        ? {
-            needSupport: value.needSupport === 'yes',
-            obstacle: value.obstacle,
-            supportCategory: value.needSupport === 'yes' ? value.supportCategory : null,
-            supportDescription: value.needSupport === 'yes' ? value.supportDescription : '',
-          }
-        : {
-            goalMet: value.goalMet,
-            supportGivenToday: value.supportGivenToday,
-            supportReceivedToday: value.supportReceivedToday,
-            reflection: value.reflection,
-          }),
-    };
-    this.busy.set(true);
-    this.message.set('');
-    const request = this.kind() === 'morning' ? this.#api.createMorning(payload) : this.#api.createEvening(payload);
-    request.subscribe({
-      next: () => {
-        this.busy.set(false);
-        const successMessage =
-          this.kind() === 'morning'
-            ? 'Morning check-in complete. Your study plan is ready.'
-            : 'Evening check-in complete. See you tomorrow.';
-        this.message.set(successMessage);
-        this.#toast.success(successMessage);
-      },
-      error: () => {
-        this.busy.set(false);
-        this.message.set('Could not submit yet. Confirm the API is available and try again.');
-        this.#toast.error('Could not submit check-in.');
-      },
+  // submit() {
+  //   if (this.form.invalid) {
+  //     this.form.markAllAsTouched();
+  //     return;
+  //   }
+  //   const value = this.form.getRawValue();
+  //   const payload = {
+  //     kind: this.kind(),
+  //     confidence: value.confidence,
+  //     goal: value.goal,
+  //     ...(this.kind() === 'morning'
+  //       ? {
+  //           needSupport: value.needSupport === 'yes',
+  //           obstacle: value.obstacle,
+  //           supportCategory: value.needSupport === 'yes' ? value.supportCategory : null,
+  //           supportDescription: value.needSupport === 'yes' ? value.supportDescription : '',
+  //         }
+  //       : {
+  //           goalMet: value.goalMet,
+  //           supportGivenToday: value.supportGivenToday,
+  //           supportReceivedToday: value.supportReceivedToday,
+  //           reflection: value.reflection,
+  //         }),
+  //   };
+  //   this.busy.set(true);
+  //   this.message.set('');
+  //   const request = this.kind() === 'morning' ? this.#api.createMorning(payload) : this.#api.createEvening(payload);
+  //   request.subscribe({
+  //     next: () => {
+  //       this.busy.set(false);
+  //       const successMessage =
+  //         this.kind() === 'morning'
+  //           ? 'Morning check-in complete. Your study plan is ready.'
+  //           : 'Evening check-in complete. See you tomorrow.';
+  //       this.message.set(successMessage);
+  //       this.#toast.success(successMessage);
+  //     },
+  //     error: () => {
+  //       this.busy.set(false);
+  //       this.message.set('Could not submit yet. Confirm the API is available and try again.');
+  //       this.#toast.error('Could not submit check-in.');
+  //     },
+  //   });
+  // }
+
+  // private configureFormForKind(kind: 'morning' | 'evening') {
+  //   if (kind === 'evening') {
+  //     this.form.controls.needSupport.clearValidators();
+  //     this.form.controls.needSupport.updateValueAndValidity();
+  //     this.form.controls.supportCategory.clearValidators();
+  //     this.form.controls.supportCategory.updateValueAndValidity();
+  //     this.form.controls.goalMet.setValidators(Validators.required);
+  //     this.form.controls.goalMet.updateValueAndValidity();
+  //     this.loadEveningSummaryIfNeeded();
+  //     return;
+  //   }
+
+  //   this.form.controls.needSupport.setValidators(Validators.required);
+  //   this.form.controls.needSupport.updateValueAndValidity();
+  //   this.form.controls.goalMet.clearValidators();
+  //   this.form.controls.goalMet.updateValueAndValidity();
+  // }
+
+  submit(): void {
+  this.form.updateValueAndValidity();
+
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();
+    this.logInvalidControls();
+    return;
+  }
+
+  const value = this.form.getRawValue();
+
+  const payload =
+    this.kind() === 'morning'
+      ? {
+          kind: 'morning' as const,
+          confidence: value.confidence,
+          goal: value.goal,
+          needSupport: value.needSupport === 'yes',
+          obstacle: value.obstacle,
+          supportCategory:
+            value.needSupport === 'yes'
+              ? value.supportCategory
+              : null,
+          supportDescription:
+            value.needSupport === 'yes'
+              ? value.supportDescription
+              : '',
+        }
+      : {
+          kind: 'evening' as const,
+          confidence: value.confidence,
+          goal: value.goal,
+          goalMet: value.goalMet,
+          supportGivenToday: value.supportGivenToday,
+          supportReceivedToday:
+            value.supportReceivedToday,
+          reflection: value.reflection,
+        };
+
+  this.busy.set(true);
+  this.message.set('');
+
+  const request =
+    this.kind() === 'morning'
+      ? this.#api.createMorning(payload)
+      : this.#api.createEvening(payload);
+
+  request.subscribe({
+    next: () => {
+      this.busy.set(false);
+
+      const successMessage =
+        this.kind() === 'morning'
+          ? 'Morning check-in complete. Your study plan is ready.'
+          : 'Evening check-in complete. See you tomorrow.';
+
+      this.message.set(successMessage);
+      this.#toast.success(successMessage);
+    },
+    error: () => {
+      this.busy.set(false);
+      this.message.set(
+        'Could not submit yet. Confirm the API is available and try again.',
+      );
+      this.#toast.error('Could not submit check-in.');
+    },
+  });
+}
+private configureFormForKind(kind: 'morning' | 'evening'): void {
+  const morningControls = [
+    this.form.controls.needSupport,
+    this.form.controls.obstacle,
+    this.form.controls.supportCategory,
+    this.form.controls.supportDescription,
+  ];
+
+  const eveningControls = [
+    this.form.controls.goalMet,
+    this.form.controls.supportGivenToday,
+    this.form.controls.supportReceivedToday,
+    this.form.controls.reflection,
+  ];
+
+  if (kind === 'evening') {
+    morningControls.forEach((control) => {
+      control.disable({
+        emitEvent: false,
+      });
+    });
+
+    eveningControls.forEach((control) => {
+      control.enable({
+        emitEvent: false,
+      });
+    });
+
+    this.form.controls.goalMet.setValidators(
+      Validators.required,
+    );
+
+    this.form.controls.goalMet.updateValueAndValidity({
+      emitEvent: false,
+    });
+
+    this.loadEveningSummaryIfNeeded();
+  } else {
+    eveningControls.forEach((control) => {
+      control.disable({
+        emitEvent: false,
+      });
+    });
+
+    morningControls.forEach((control) => {
+      control.enable({
+        emitEvent: false,
+      });
+    });
+
+    this.form.controls.needSupport.setValidators(
+      Validators.required,
+    );
+
+    this.form.controls.needSupport.updateValueAndValidity({
+      emitEvent: false,
     });
   }
 
-  private configureFormForKind(kind: 'morning' | 'evening') {
-    if (kind === 'evening') {
-      this.form.controls.needSupport.clearValidators();
-      this.form.controls.needSupport.updateValueAndValidity();
-      this.form.controls.supportCategory.clearValidators();
-      this.form.controls.supportCategory.updateValueAndValidity();
-      this.form.controls.goalMet.setValidators(Validators.required);
-      this.form.controls.goalMet.updateValueAndValidity();
-      this.loadEveningSummaryIfNeeded();
-      return;
-    }
-
-    this.form.controls.needSupport.setValidators(Validators.required);
-    this.form.controls.needSupport.updateValueAndValidity();
-    this.form.controls.goalMet.clearValidators();
-    this.form.controls.goalMet.updateValueAndValidity();
-  }
-
+  this.form.updateValueAndValidity({
+    emitEvent: false,
+  });
+}
   private loadEveningSummaryIfNeeded() {
     if (this.kind() !== 'evening' || this.#eveningSummaryRequested) {
       return;
@@ -565,4 +692,19 @@ selectGoalOutcome(
     const remainingMinutes = minutes % 60;
     return remainingMinutes ? `${hours} hr ${remainingMinutes} min` : `${hours} hr`;
   }
+
+  private logInvalidControls(): void {
+  const invalidControls = Object.entries(
+    this.form.controls,
+  )
+    .filter(([, control]) => control.invalid)
+    .map(([name, control]) => ({
+      name,
+      value: control.value,
+      errors: control.errors,
+      disabled: control.disabled,
+    }));
+
+  console.table(invalidControls);
+}
 }
