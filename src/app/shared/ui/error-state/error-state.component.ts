@@ -9,6 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
     <mat-icon aria-hidden="true">error</mat-icon>
     <h2>{{ title() }}</h2>
     <p>{{ message() }}</p>
+    @if (correlationId()) {
+      <p class="correlation-id">Support correlation ID: {{ correlationId() }}</p>
+    }
     <button mat-stroked-button type="button" (click)="retry.emit()">Try again</button>
   </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,5 +19,6 @@ import { MatIconModule } from '@angular/material/icon';
 export class ErrorStateComponent {
   title = input('Something went wrong');
   message = input('Please try again.');
+  correlationId = input<string>();
   retry = output<void>();
 }
