@@ -184,3 +184,36 @@ export interface LearningPackImportSummary {
   importedAt?: string;
   sourceFileName?: string;
 }
+
+export interface TodayLearningPackDto {
+  id?: string;
+  packNumber: number;
+  title: string;
+  topic: string;
+  capsuleCount: number;
+  completedCapsules: number;
+  status: string;
+  continueUrl?: string;
+}
+
+export interface TodayChallengeDto {
+  studyDay: number;
+  phaseTitle: string;
+  dailyTitle: string;
+  encouragementMessage: string;
+  administrativeAnnouncement: string;
+  teamProgressMessage: string;
+  targetCapsules: number;
+  targetQuestions: number;
+  targetStudyMinutes: number;
+  completionPercentage: number;
+  currentStreak: number;
+  assignedLearningPacks: TodayLearningPackDto[];
+  morningCheckInDone: boolean;
+  eveningCheckInDone: boolean;
+  continueUrl?: string;
+  currentCapsuleUrl?: string;
+  locked?: boolean;
+  releaseAtUtc?: string;
+  cohortTimeZone?: string;
+}

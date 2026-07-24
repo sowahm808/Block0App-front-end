@@ -11,7 +11,6 @@ const generatedShells = [
   'src/app/features/challenge/challenge-day-progress.component.ts',
   'src/app/features/challenge/start-study-action.component.ts',
   'src/app/features/challenge/today-activity-list.component.ts',
-  'src/app/features/challenge/today-challenge.page.ts',
   'src/app/features/content-review/approval-action-bar.component.ts',
   'src/app/features/content-review/question-review-preview.component.ts',
   'src/app/features/content-review/reference-review.component.ts',
