@@ -1,38 +1,73 @@
-import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
-import { ApiService } from '../../core/api/api.service';
-import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
-import { DataTemplateComponent } from '../../shared/components/data-template.component';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-interface ApiState<T> { status: 'loading' | 'loaded' | 'empty' | 'error'; data?: T; message?: string }
+export type RaffleEntryStatus = 'active' | 'drawn' | 'expired' | 'void';
+
+export interface RaffleEntry {
+  id: string;
+  entryReason: string;
+  dateEarned: string;
+  sourceActivity: string;
+  raffleName: string;
+  status: RaffleEntryStatus;
+}
+
+const STATUS_LABELS: Record<RaffleEntryStatus, string> = {
+  active: 'Active',
+  drawn: 'Drawn',
+  expired: 'Expired',
+  void: 'Void',
+};
 
 @Component({
   selector: 'b0-raffle-entry-card',
   standalone: true,
-  imports: [AsyncPipe, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
-  template: `<b0-page-header title="Raffle Entry Card" description="Production component for Block Zero workflows." />
-  @if (state$ | async; as state) {
-    @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
-    @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load data.'" (retry)="reload()" /> }
-    @else if (state.status === 'empty') { <b0-empty-state title="No records available" message="The backend has no records for this view yet. Unsupported actions stay disabled until API support exists." /> }
-    @else { <b0-data-template [data]="state.data" ariaLabel="Raffle Entry Card content" /> }
-  }`,
+  template: `
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">Raffle entry</span>
+            <span [class]="statusClass">{{ statusLabel }}</span>
+          </div>
+          <h3 class="text-lg font-semibold text-slate-950">{{ entry.entryReason }}</h3>
+          <p class="text-sm leading-6 text-slate-600">Earned from {{ entry.sourceActivity }}.</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 sm:min-w-40">
+          <p class="font-medium text-slate-500">Date earned</p>
+          <p class="font-semibold text-slate-900">{{ entry.dateEarned }}</p>
+        </div>
+      </div>
+
+      <dl class="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+        <div>
+          <dt class="font-medium text-slate-500">Source activity</dt>
+          <dd class="mt-1 text-slate-800">{{ entry.sourceActivity }}</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Raffle name</dt>
+          <dd class="mt-1 text-slate-800">{{ entry.raffleName }}</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Status</dt>
+          <dd class="mt-1 text-slate-800">{{ statusLabel }}</dd>
+        </div>
+      </dl>
+    </article>
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RaffleEntryCardComponent {
-  #api = inject(ApiService);
-  #route = inject(ActivatedRoute);
-  readonly state$ = this.#route.data.pipe(
-    switchMap((data) => this.#api.get<unknown>(String(data['apiPath'] ?? '/health')).pipe(
-      map((result) => ({ status: result ? 'loaded' : 'empty', data: result }) satisfies ApiState<unknown>),
-      startWith({ status: 'loading' } satisfies ApiState<unknown>),
-      catchError((error: unknown) => of({ status: 'error', message: error instanceof Error ? error.message : 'Backend endpoint is unavailable.' } satisfies ApiState<unknown>)),
-    )),
-  );
-  reload() { window.location.reload(); }
+  @Input({ required: true }) entry!: RaffleEntry;
+
+  get statusLabel() {
+    return STATUS_LABELS[this.entry.status] ?? this.entry.status;
+  }
+
+  get statusClass() {
+    const base = 'rounded-full px-3 py-1 text-xs font-semibold';
+    if (this.entry.status === 'active') return `${base} bg-emerald-50 text-emerald-700`;
+    if (this.entry.status === 'drawn') return `${base} bg-blue-50 text-blue-700`;
+    if (this.entry.status === 'expired') return `${base} bg-amber-50 text-amber-700`;
+    return `${base} bg-slate-100 text-slate-600`;
+  }
 }
