@@ -1,11 +1,14 @@
 import { AsyncPipe, DecimalPipe, NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { catchError, map, of, shareReplay, startWith, switchMap } from 'rxjs';
 import { LearningPack, LearningPackCapsule } from '../../../core/api/api.types';
+import { ToastService } from '../../../core/feedback/toast.service';
+import { CapsuleService } from '../../capsules/capsule.service';
 import { LearningPacksService } from '../data-access/learning-packs.service';
 
 interface LearningPackDetailVm {
@@ -13,6 +16,48 @@ interface LearningPackDetailVm {
   loading: boolean;
   error: unknown;
 }
+
+interface CapsuleStartDialogData {
+  capsule: LearningPackCapsule;
+}
+
+@Component({
+  selector: 'b0-capsule-start-dialog',
+  standalone: true,
+  imports: [MatButtonModule, MatDialogModule],
+  template: `<h2 mat-dialog-title>Start Capsule {{ capsuleNumber(data.capsule) }}?</h2>
+    <mat-dialog-content class="grid gap-3">
+      <p class="m-0">Four questions</p>
+      <p class="m-0">Estimated duration: {{ estimatedDuration(data.capsule) }}</p>
+      <p class="m-0 font-bold">Submitted answers cannot be changed.</p>
+      <p class="m-0">Each question includes W1, W2, and W3.</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancel</button>
+      <button mat-raised-button color="primary" [mat-dialog-close]="true">Start Capsule</button>
+    </mat-dialog-actions>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CapsuleStartDialogComponent {
+  readonly data = inject<CapsuleStartDialogData>(MAT_DIALOG_DATA);
+  readonly ref = inject(MatDialogRef<CapsuleStartDialogComponent>);
+  capsuleNumber(capsule: LearningPackCapsule) { return capsule.sequence ?? capsule.capsuleNumber ?? '—'; }
+  estimatedDuration(capsule: LearningPackCapsule) { return capsule.estimatedMinutes ? `${capsule.estimatedMinutes} min` : 'about 8–12 min'; }
+}
+
+@Component({
+  selector: 'b0-active-capsule-attempt-dialog',
+  standalone: true,
+  imports: [MatButtonModule, MatDialogModule],
+  template: `<h2 mat-dialog-title>You already have an active attempt.</h2>
+    <mat-dialog-content><p>Resume the existing attempt to continue this capsule.</p></mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancel</button>
+      <button mat-raised-button color="primary" [mat-dialog-close]="true">Resume Attempt</button>
+    </mat-dialog-actions>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ActiveCapsuleAttemptDialogComponent {}
 
 @Component({
   standalone: true,
@@ -71,7 +116,7 @@ interface LearningPackDetailVm {
               <div><b>{{ studyTime(vm.pack) }}</b><span>Estimated study time</span></div>
             </div>
             <div class="flex flex-wrap gap-2">
-              <a mat-flat-button color="primary" [disabled]="isLocked(vm.pack)" [routerLink]="nextCapsuleLink(vm.pack)">Start Next Capsule</a>
+              <button mat-flat-button color="primary" type="button" [disabled]="isLocked(vm.pack) || !nextCapsule(vm.pack)" (click)="openStartDialog(nextCapsule(vm.pack)!)">Start Next Capsule</button>
               <a mat-stroked-button [disabled]="!activeCapsuleLink(vm.pack) || isLocked(vm.pack)" [routerLink]="activeCapsuleLink(vm.pack)">Continue Active Capsule</a>
               <a mat-stroked-button routerLink="/learning-packs">Return to Learning Packs</a>
             </div>
@@ -89,7 +134,7 @@ interface LearningPackDetailVm {
               <div class="text-sm"><b>{{ capsuleQuestionCount(capsule) }}</b> questions</div>
               <span class="rounded-full px-3 py-1 text-sm font-bold" [ngClass]="capsuleStatusClass(capsule)">{{ capsuleStatusLabel(capsule) }}</span>
               <div class="text-sm text-[var(--b0-text-muted)]">{{ completionDate(capsule) }}</div>
-              <a mat-flat-button color="primary" [disabled]="isCapsuleLocked(capsule)" [routerLink]="capsuleLink(capsule)">{{ capsuleAction(capsule) }}</a>
+              <button mat-flat-button color="primary" type="button" [disabled]="isCapsuleLocked(capsule) || startingCapsuleId() === capsuleStartId(capsule)" (click)="openStartDialog(capsule)">{{ startingCapsuleId() === capsuleStartId(capsule) ? 'Starting…' : capsuleAction(capsule) }}</button>
             </mat-card>
           } @empty {
             <mat-card class="p-6">Capsules will appear here when the backend returns the pack detail.</mat-card>
@@ -110,7 +155,12 @@ interface LearningPackDetailVm {
 })
 export class LearningPackDetailPage {
   #route = inject(ActivatedRoute);
+  #router = inject(Router);
   #packs = inject(LearningPacksService);
+  #capsules = inject(CapsuleService);
+  #dialog = inject(MatDialog);
+  #toast = inject(ToastService);
+  startingCapsuleId = signal<string | null>(null);
   vm$ = this.#route.paramMap.pipe(
     map((params) => params.get('packId') ?? params.get('learningPackId') ?? ''),
     switchMap((packId) => this.#packs.detail(packId).pipe(map((pack) => ({ pack, loading: false, error: null })), catchError((error) => of({ pack: null, loading: false, error })))),
@@ -141,7 +191,49 @@ export class LearningPackDetailPage {
   completionDate(capsule: LearningPackCapsule) { return capsule.completedAtUtc ?? capsule.completedAt ?? 'Not completed'; }
   capsuleAction(capsule: LearningPackCapsule) { return this.normalizedCapsuleStatus(capsule) === 'in_progress' ? 'Continue' : 'Start'; }
   capsuleLink(capsule: LearningPackCapsule) { return capsule.continueUrl ?? capsule.startUrl ?? `/capsules/${capsule.id ?? capsule.externalId}`; }
-  nextCapsuleLink(pack: LearningPack) { return pack.nextCapsuleUrl ?? pack.continueUrl ?? this.capsuleLink(this.capsules(pack).find((c) => this.normalizedCapsuleStatus(c) !== 'completed') ?? {} as LearningPackCapsule); }
+  nextCapsule(pack: LearningPack) { return this.capsules(pack).find((c) => this.normalizedCapsuleStatus(c) !== 'completed') ?? null; }
+  nextCapsuleLink(pack: LearningPack) { return pack.nextCapsuleUrl ?? pack.continueUrl ?? this.capsuleLink(this.nextCapsule(pack) ?? {} as LearningPackCapsule); }
   activeCapsuleLink(pack: LearningPack) { return pack.activeCapsuleUrl ?? pack.continueUrl ?? this.capsules(pack).find((c) => this.normalizedCapsuleStatus(c) === 'in_progress')?.continueUrl ?? null; }
+
+  openStartDialog(capsule: LearningPackCapsule) {
+    if (this.normalizedCapsuleStatus(capsule) === 'in_progress') {
+      this.openActiveAttemptDialog(capsule);
+      return;
+    }
+    const ref = this.#dialog.open(CapsuleStartDialogComponent, { data: { capsule }, width: 'min(92vw, 32rem)' });
+    ref.afterClosed().subscribe((confirmed) => {
+      if (confirmed) this.startCapsule(capsule);
+    });
+  }
+  startCapsule(capsule: LearningPackCapsule) {
+    const capsuleId = this.capsuleStartId(capsule);
+    if (!capsuleId) return;
+    this.startingCapsuleId.set(capsuleId);
+    this.#capsules.start(capsuleId, this.idempotencyKey(capsuleId)).subscribe({
+      next: (attempt) => {
+        this.startingCapsuleId.set(null);
+        void this.#router.navigateByUrl(attempt.resumeUrl ?? `/capsules/${attempt.capsuleAttemptId}`);
+      },
+      error: (error) => {
+        this.startingCapsuleId.set(null);
+        if ((error as { status?: number })?.status === 409) {
+          this.openActiveAttemptDialog(capsule, this.activeAttemptIdFromError(error));
+          return;
+        }
+        this.#toast.error('Could not start capsule. Please retry.');
+      },
+    });
+  }
+  openActiveAttemptDialog(capsule: LearningPackCapsule, attemptId = this.activeAttemptId(capsule)) {
+    const ref = this.#dialog.open(ActiveCapsuleAttemptDialogComponent, { width: 'min(92vw, 30rem)' });
+    ref.afterClosed().subscribe((resume) => {
+      if (resume) void this.#router.navigateByUrl(this.resumeAttemptUrl(capsule, attemptId));
+    });
+  }
+  capsuleStartId(capsule: LearningPackCapsule) { return capsule.capsuleId ?? capsule.id ?? capsule.externalId ?? ''; }
+  activeAttemptId(capsule: LearningPackCapsule) { return capsule.activeCapsuleAttemptId ?? capsule.activeAttemptId ?? ''; }
+  resumeAttemptUrl(capsule: LearningPackCapsule, attemptId?: string) { return capsule.continueUrl ?? (attemptId ? `/capsules/${attemptId}` : this.capsuleLink(capsule)); }
+  activeAttemptIdFromError(error: unknown) { return ((error as { error?: { capsuleAttemptId?: string; activeAttemptId?: string } }).error?.capsuleAttemptId ?? (error as { error?: { activeAttemptId?: string } }).error?.activeAttemptId ?? ''); }
+  idempotencyKey(capsuleId: string) { return globalThis.crypto?.randomUUID?.() ?? `capsule-start-${capsuleId}-${Date.now()}`; }
   errorMessage(error: unknown) { const status = (error as { status?: number })?.status; if (status === 404) return 'This learning pack was not found.'; if (status === 403) return 'You do not have permission to view this pack.'; return 'The backend is unavailable. Please retry.'; }
 }

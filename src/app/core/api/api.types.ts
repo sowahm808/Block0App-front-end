@@ -43,18 +43,30 @@ export type CurrentUserResponse = CurrentUser;
 
 export interface LearningPackCapsule {
   id?: string;
+  capsuleId?: string;
   externalId?: string;
   capsuleNumber?: number;
   sequence?: number;
   title: string;
   questionCount?: number;
   totalQuestions?: number;
+  estimatedMinutes?: number;
+  estimatedDurationMinutes?: number;
   status?: string;
   progressStatus?: string;
   completedAt?: string;
   completedAtUtc?: string;
   startUrl?: string;
   continueUrl?: string;
+  activeAttemptId?: string;
+  activeCapsuleAttemptId?: string;
+}
+
+export interface CapsuleStartResponse {
+  capsuleAttemptId: string;
+  capsuleId?: string;
+  status?: string;
+  resumeUrl?: string;
 }
 
 export interface LearningPack {
