@@ -19,10 +19,8 @@ const generatedShells = [
   'src/app/features/content-review/review-queue.page.ts',
   'src/app/features/notifications/notification-empty-state.component.ts',
   'src/app/features/notifications/notification-filter.component.ts',
-  'src/app/features/notifications/notification-preferences.page.ts',
   'src/app/features/notifications/notification-channel-toggle.component.ts',
   'src/app/features/notifications/push-permission.component.ts',
-  'src/app/features/notifications/notification-center.page.ts',
 ];
 
 describe('generated page shells', () => {
