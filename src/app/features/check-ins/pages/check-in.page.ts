@@ -422,11 +422,17 @@ export class CheckInPage implements OnInit {
   });
 
   constructor() {
-    effect(() => this.configureFormForKind(this.kind()));
+    //effect(() => this.configureFormForKind(this.kind()));
+    effect(() => {
+    const currentKind = this.kind();
+    this.configureFormForKind(currentKind);
+  });
   }
 
   ngOnInit() {
-    this.loadEveningSummaryIfNeeded();
+    //this.loadEveningSummaryIfNeeded();
+      this.configureFormForKind(this.kind());
+
   }
 
   // selectConfidence(value: number) {
@@ -443,19 +449,57 @@ export class CheckInPage implements OnInit {
   //   this.form.controls.goalMet.updateValueAndValidity();
   // }
 
-  setNeedSupport(value: 'yes' | 'no') {
-    this.form.controls.needSupport.setValue(value);
-    this.form.controls.needSupport.markAsDirty();
-    this.form.controls.needSupport.markAsTouched();
-    if (value === 'yes') {
-      this.form.controls.supportCategory.addValidators(Validators.required);
-    } else {
-      this.form.controls.supportCategory.clearValidators();
-      this.form.controls.supportCategory.setValue('');
-      this.form.controls.supportDescription.setValue('');
-    }
-    this.form.controls.supportCategory.updateValueAndValidity();
+  // setNeedSupport(value: 'yes' | 'no') {
+  //   this.form.controls.needSupport.setValue(value);
+  //   this.form.controls.needSupport.markAsDirty();
+  //   this.form.controls.needSupport.markAsTouched();
+  //   if (value === 'yes') {
+  //     this.form.controls.supportCategory.addValidators(Validators.required);
+  //   } else {
+  //     this.form.controls.supportCategory.clearValidators();
+  //     this.form.controls.supportCategory.setValue('');
+  //     this.form.controls.supportDescription.setValue('');
+  //   }
+  //   this.form.controls.supportCategory.updateValueAndValidity();
+  // }
+setNeedSupport(value: 'yes' | 'no'): void {
+  const controls = this.form.controls;
+
+  controls.needSupport.setValue(value);
+  controls.needSupport.markAsDirty();
+  controls.needSupport.markAsTouched();
+
+  if (value === 'yes') {
+    controls.supportCategory.enable({ emitEvent: false });
+    controls.supportDescription.enable({ emitEvent: false });
+
+    controls.supportCategory.setValidators(
+      Validators.required,
+    );
+  } else {
+    controls.supportCategory.clearValidators();
+
+    controls.supportCategory.setValue('', {
+      emitEvent: false,
+    });
+
+    controls.supportDescription.setValue('', {
+      emitEvent: false,
+    });
+
+    controls.supportCategory.disable({
+      emitEvent: false,
+    });
+
+    controls.supportDescription.disable({
+      emitEvent: false,
+    });
   }
+
+  controls.supportCategory.updateValueAndValidity();
+  controls.supportDescription.updateValueAndValidity();
+  this.form.updateValueAndValidity();
+}
 
   selectConfidence(level: number): void {
   this.form.controls.confidence.setValue(level);
@@ -608,67 +652,63 @@ selectGoalOutcome(
   });
 }
 private configureFormForKind(kind: 'morning' | 'evening'): void {
-  const morningControls = [
-    this.form.controls.needSupport,
-    this.form.controls.obstacle,
-    this.form.controls.supportCategory,
-    this.form.controls.supportDescription,
-  ];
+  const controls = this.form.controls;
 
-  const eveningControls = [
-    this.form.controls.goalMet,
-    this.form.controls.supportGivenToday,
-    this.form.controls.supportReceivedToday,
-    this.form.controls.reflection,
-  ];
+  if (kind === 'morning') {
+    // Enable fields used by the morning check-in.
+    controls.confidence.enable({ emitEvent: false });
+    controls.goal.enable({ emitEvent: false });
+    controls.needSupport.enable({ emitEvent: false });
+    controls.obstacle.enable({ emitEvent: false });
 
-  if (kind === 'evening') {
-    morningControls.forEach((control) => {
-      control.disable({
-        emitEvent: false,
-      });
-    });
+    // Only enable support detail fields when support is requested.
+    if (controls.needSupport.value === 'yes') {
+      controls.supportCategory.enable({ emitEvent: false });
+      controls.supportDescription.enable({ emitEvent: false });
+      controls.supportCategory.setValidators(Validators.required);
+    } else {
+      controls.supportCategory.disable({ emitEvent: false });
+      controls.supportDescription.disable({ emitEvent: false });
+      controls.supportCategory.clearValidators();
+    }
 
-    eveningControls.forEach((control) => {
-      control.enable({
-        emitEvent: false,
-      });
-    });
+    // Evening-only controls must not participate in morning validation.
+    controls.goalMet.disable({ emitEvent: false });
+    controls.supportGivenToday.disable({ emitEvent: false });
+    controls.supportReceivedToday.disable({ emitEvent: false });
+    controls.reflection.disable({ emitEvent: false });
 
-    this.form.controls.goalMet.setValidators(
-      Validators.required,
-    );
+    controls.needSupport.setValidators(Validators.required);
+    controls.goalMet.clearValidators();
+  } else {
+    // Keep shared fields enabled.
+    controls.confidence.enable({ emitEvent: false });
+    controls.goal.enable({ emitEvent: false });
 
-    this.form.controls.goalMet.updateValueAndValidity({
-      emitEvent: false,
-    });
+    // Disable morning-only controls.
+    controls.needSupport.disable({ emitEvent: false });
+    controls.obstacle.disable({ emitEvent: false });
+    controls.supportCategory.disable({ emitEvent: false });
+    controls.supportDescription.disable({ emitEvent: false });
+
+    // Enable evening-only controls.
+    controls.goalMet.enable({ emitEvent: false });
+    controls.supportGivenToday.enable({ emitEvent: false });
+    controls.supportReceivedToday.enable({ emitEvent: false });
+    controls.reflection.enable({ emitEvent: false });
+
+    controls.needSupport.clearValidators();
+    controls.supportCategory.clearValidators();
+    controls.goalMet.setValidators(Validators.required);
 
     this.loadEveningSummaryIfNeeded();
-  } else {
-    eveningControls.forEach((control) => {
-      control.disable({
-        emitEvent: false,
-      });
-    });
-
-    morningControls.forEach((control) => {
-      control.enable({
-        emitEvent: false,
-      });
-    });
-
-    this.form.controls.needSupport.setValidators(
-      Validators.required,
-    );
-
-    this.form.controls.needSupport.updateValueAndValidity({
-      emitEvent: false,
-    });
   }
 
-  this.form.updateValueAndValidity({
-    emitEvent: false,
+  Object.values(controls).forEach((control) => {
+    control.updateValueAndValidity({ emitEvent: false });
   });
+
+  this.form.updateValueAndValidity({ emitEvent: false });
 }
   private loadEveningSummaryIfNeeded() {
     if (this.kind() !== 'evening' || this.#eveningSummaryRequested) {
