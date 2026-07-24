@@ -83,7 +83,7 @@ export const routes: Routes = [
         path: 'scenario-attempts/:attemptId',
         canMatch: [roleMatchGuard],
         data: { roles: ['Scholar'] },
-        loadChildren: () => import('./features/scenarios/routes'),
+        loadChildren: () => import('./features/scenarios/attempt-routes'),
       },
       {
         path: 'rehearsal',

@@ -1,38 +1,64 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
-import { ApiService } from '../../core/api/api.service';
-import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
-import { DataTemplateComponent } from '../../shared/components/data-template.component';
-
-interface ApiState<T> { status: 'loading' | 'loaded' | 'empty' | 'error'; data?: T; message?: string }
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { map, switchMap } from 'rxjs';
+import { ScenarioDataService } from './scenario-data.service';
 
 @Component({
-  selector: 'b0-scenario-detail',
   standalone: true,
-  imports: [AsyncPipe, DataTemplateComponent, PageHeaderComponent, LoadingSkeletonComponent, EmptyStateComponent, ErrorStateComponent],
-  template: `<b0-page-header title="Scenario Detail" description="Production page for Block Zero workflows." />
-  @if (state$ | async; as state) {
-    @if (state.status === 'loading') { <b0-loading-skeleton [rows]="4" /> }
-    @else if (state.status === 'error') { <b0-error-state [message]="state.message || 'Unable to load data.'" (retry)="reload()" /> }
-    @else if (state.status === 'empty') { <b0-empty-state title="No records available" message="The backend has no records for this view yet. Unsupported actions stay disabled until API support exists." /> }
-    @else { <b0-data-template [data]="state.data" ariaLabel="Scenario Detail content" /> }
-  }`,
+  imports: [AsyncPipe, RouterLink, MatButtonModule, MatCardModule],
+  template: `<section class="grid gap-5" aria-labelledby="scenario-title">
+    @if (scenario$ | async; as s) {
+      <header>
+        <p class="eyebrow">{{ s.clinicalDomain }}</p>
+        <h1 id="scenario-title">{{ s.title }}</h1>
+        <p>
+          {{ s.difficulty }} · {{ s.estimatedMinutes }} min · {{ s.questionCount }} questions ·
+          {{ s.mode === 'timed' ? 'Timed' : 'Untimed' }}
+        </p>
+      </header>
+      @if (s.mode === 'timed') {
+        <mat-card class="border border-amber-300 bg-amber-50 p-4"
+          ><strong>Timed scenario warning</strong>
+          <p class="m-0">The timer begins when you select Start Scenario.</p></mat-card
+        >
+      }
+      <mat-card class="grid gap-4 p-5"
+        ><h2>Instructions</h2>
+        <ul>
+          @for (instruction of s.instructions; track instruction) {
+            <li>{{ instruction }}</li>
+          }
+        </ul>
+        <h2>Attempt rules</h2>
+        <ul>
+          @for (rule of s.attemptRules; track rule) {
+            <li>{{ rule }}</li>
+          }
+        </ul></mat-card
+      >
+      <div class="flex flex-wrap gap-2">
+        <button mat-flat-button color="primary" type="button" (click)="start(s.id)">Start Scenario</button>
+        @if (s.activeAttemptId) {
+          <a mat-stroked-button [routerLink]="['/scenario-attempts', s.activeAttemptId]">Resume Attempt</a>
+        }
+        <a mat-button routerLink="/scenarios">Return to Scenarios</a>
+      </div>
+    }
+  </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScenarioDetailPage {
-  #api = inject(ApiService);
   #route = inject(ActivatedRoute);
-  readonly state$ = this.#route.data.pipe(
-    switchMap((data) => this.#api.get<unknown>(String(data['apiPath'] ?? '/health')).pipe(
-      map((result) => ({ status: result ? 'loaded' : 'empty', data: result }) satisfies ApiState<unknown>),
-      startWith({ status: 'loading' } satisfies ApiState<unknown>),
-      catchError((error: unknown) => of({ status: 'error', message: error instanceof Error ? error.message : 'Backend endpoint is unavailable.' } satisfies ApiState<unknown>)),
-    )),
+  #router = inject(Router);
+  #data = inject(ScenarioDataService);
+  scenario$ = this.#route.paramMap.pipe(
+    map((p) => p.get('scenarioId') ?? ''),
+    switchMap((id) => this.#data.detail(id)),
   );
-  reload() { window.location.reload(); }
+  start(id: string) {
+    this.#data.startAttempt(id).subscribe((attemptId) => void this.#router.navigate(['/scenario-attempts', attemptId]));
+  }
 }
