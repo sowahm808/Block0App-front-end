@@ -268,6 +268,47 @@ export interface LearningPackImportSummary {
   sourceFileName?: string;
 }
 
+export type LearningPackImportStatus =
+  | 'uploaded'
+  | 'extracted'
+  | 'needs_review'
+  | 'validated'
+  | 'committing'
+  | 'completed'
+  | 'failed';
+
+export interface ProblemDetails {
+  title?: string;
+  detail?: string;
+  status?: number;
+  traceId?: string;
+  errors?: Record<string, string[]> | Array<string | { path?: string; message: string }>;
+}
+
+export interface LearningPackImportRecord {
+  importId: string;
+  sourceFileName: string;
+  packTitle?: string;
+  uploadedBy?: string;
+  uploadedAt?: string;
+  status: LearningPackImportStatus | string;
+  validationCount?: number;
+  validationErrors?: Array<string | { path?: string; message: string }>;
+  extractionWarnings?: Array<string | { path?: string; message: string }>;
+  created?: number;
+  updated?: number;
+  skipped?: number;
+  failed?: number;
+  draft?: LearningPackImportRequest;
+  valid?: boolean;
+  contentVersion?: string;
+}
+
+export interface LearningPackImportList {
+  items: LearningPackImportRecord[];
+  nextCursor?: string | null;
+}
+
 export interface TodayLearningPackDto {
   id?: string;
   packNumber: number;

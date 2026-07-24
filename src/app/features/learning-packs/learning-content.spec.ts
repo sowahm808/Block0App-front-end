@@ -141,7 +141,6 @@ describe('learning content UI', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Cardio Basics');
   });
 
-
   it('learning-pack detail page renders header, metrics, objectives, capsules, and actions', async () => {
     await TestBed.configureTestingModule({
       imports: [LearningPackDetailPage],
@@ -270,21 +269,23 @@ describe('learning content UI', () => {
     expect(JSON.stringify(next)).toContain('Pearl');
   });
 
-  it('import page blocks invalid JSON before calling the API', async () => {
-    const service = { importLearningPack: vi.fn() };
+  it('import page blocks invalid files before calling the API', async () => {
+    const service = { list: () => of({ items: [] }), upload: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [ImportLearningPackPage],
-      providers: [provideNoopAnimations(), { provide: ContentImportService, useValue: service }],
+      providers: [provideNoopAnimations(), provideRouter([]), { provide: ContentImportService, useValue: service }],
     }).compileComponents();
     const fixture = TestBed.createComponent(ImportLearningPackPage);
     const c = fixture.componentInstance;
-    c.jsonText = '{';
-    c.submit();
-    expect(service.importLearningPack).not.toHaveBeenCalled();
-    expect(c.parseError()).toContain('Invalid JSON');
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', { value: [new File(['bad'], 'pack.json')] });
+    c.selectFile({ target: input } as unknown as Event);
+    c.upload();
+    expect(service.upload).not.toHaveBeenCalled();
+    expect(c.fileError()).toContain('PDF or DOCX');
   });
 
-  it('import page renders created/updated/failed counts and validation errors', async () => {
+  it('import page renders import history and write counts', async () => {
     await TestBed.configureTestingModule({
       imports: [ImportLearningPackPage],
       providers: [
@@ -292,17 +293,31 @@ describe('learning content UI', () => {
         {
           provide: ContentImportService,
           useValue: {
-            importLearningPack: () =>
-              of({ created: 1, updated: 2, skipped: 0, failed: 1, validationErrors: ['Bad row'] }),
+            list: () =>
+              of({
+                items: [
+                  {
+                    importId: 'i1',
+                    sourceFileName: 'pack.pdf',
+                    packTitle: 'Pack one',
+                    status: 'validated',
+                    created: 1,
+                    updated: 2,
+                    failed: 1,
+                    validationErrors: ['Bad row'],
+                  },
+                ],
+              }),
           },
         },
+        provideRouter([]),
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(ImportLearningPackPage);
-    fixture.componentInstance.submit();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Created 1');
-    expect(fixture.nativeElement.textContent).toContain('Bad row');
+    expect(fixture.nativeElement.textContent).toContain('Pack one');
+    expect(fixture.nativeElement.textContent).toContain('1 created · 2 updated');
+    expect(fixture.nativeElement.textContent).toContain('1 validation issue');
   });
 
   it('role guards prevent scholars from seeing admin/content import navigation', () => {
