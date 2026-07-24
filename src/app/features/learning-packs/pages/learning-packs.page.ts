@@ -50,11 +50,11 @@ interface LearningPackListVm {
 
     <mat-card class="grid gap-4 p-4" aria-label="Learning pack filters">
       <div class="learning-pack-filters grid gap-3">
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Search</mat-label>
           <input matInput type="search" [formControl]="search" placeholder="Code, title, objective" />
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Topic</mat-label>
           <mat-select [formControl]="topic">
             <mat-option value="all">All topics</mat-option>
@@ -65,7 +65,7 @@ interface LearningPackListVm {
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Status</mat-label>
           <mat-select [formControl]="status">
             <mat-option value="all">All</mat-option>
@@ -75,7 +75,7 @@ interface LearningPackListVm {
             <mat-option value="locked">Locked</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Availability</mat-label>
           <mat-select [formControl]="availability">
             <mat-option value="all">All availability</mat-option>
@@ -84,7 +84,7 @@ interface LearningPackListVm {
             <mat-option value="coming_soon">Coming soon</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Sort</mat-label>
           <mat-select [formControl]="sort">
             <mat-option value="recommended">Recommended</mat-option>
@@ -174,19 +174,9 @@ interface LearningPackListVm {
         min-width: 0;
       }
 
-      :host ::ng-deep .learning-pack-filters .mat-mdc-form-field-flex {
-        align-items: center;
-      }
-
       :host ::ng-deep .learning-pack-filters .mat-mdc-form-field-infix {
-        width: auto;
-        min-height: 3.5rem;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-      }
-
-      :host ::ng-deep .learning-pack-filters .mat-mdc-select-trigger {
-        min-height: 1.5rem;
+        width: 100%;
+        min-width: 0;
       }
     `,
   ],
