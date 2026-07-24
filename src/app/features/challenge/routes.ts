@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { roleGuard } from '../../core/guards/role.guard';
 
 export default [
+  { path: '', pathMatch: 'full', redirectTo: 'program' },
   {
     path: 'program',
     canActivate: [roleGuard],
