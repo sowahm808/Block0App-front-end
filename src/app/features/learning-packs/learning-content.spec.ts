@@ -8,6 +8,7 @@ import { DashboardService } from '../dashboard/data-access/dashboard.service';
 import { LearningPackDetailPage } from './pages/learning-pack-detail.page';
 import { LearningPacksPage } from './pages/learning-packs.page';
 import { LearningPacksService } from './data-access/learning-packs.service';
+import { CapsuleService } from '../capsules/capsule.service';
 import { sanitizeCapsuleResume } from '../capsules/pages/capsule.page';
 import { showCorrectAnswer } from '../questions/state/question-state-machine';
 import { ImportLearningPackPage } from '../admin/pages/import-learning-pack.page';
@@ -61,6 +62,7 @@ describe('learning content UI', () => {
         provideNoopAnimations(),
         provideRouter([]),
         { provide: DashboardService, useValue: { getDashboard: () => of(dashboard) } },
+        { provide: CapsuleService, useValue: { start: vi.fn() } },
         {
           provide: LearningPacksService,
           useValue: {
@@ -102,6 +104,7 @@ describe('learning content UI', () => {
       providers: [
         provideNoopAnimations(),
         provideRouter([]),
+        { provide: CapsuleService, useValue: { start: vi.fn() } },
         {
           provide: LearningPacksService,
           useValue: {
@@ -145,6 +148,7 @@ describe('learning content UI', () => {
       providers: [
         provideNoopAnimations(),
         provideRouter([{ path: 'learning-packs', component: LearningPacksPage }]),
+        { provide: CapsuleService, useValue: { start: vi.fn() } },
         {
           provide: LearningPacksService,
           useValue: {
