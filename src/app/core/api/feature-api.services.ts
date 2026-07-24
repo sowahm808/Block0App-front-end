@@ -78,6 +78,10 @@ export class SupportRequestsApiService extends CrudApi {
   constructor() {
     super('/support-requests');
   }
+
+  mine<T>() {
+    return this.api.get<T>('/support-requests/mine');
+  }
 }
 @Injectable({ providedIn: 'root' })
 export class ReadinessApiService extends CrudApi {
