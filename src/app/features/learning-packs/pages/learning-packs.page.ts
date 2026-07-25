@@ -153,10 +153,16 @@ interface LearningPackListVm {
               </div>
             </mat-card>
           } @empty {
-            <mat-card class="p-6"
-              ><h2>No learning packs match these filters</h2>
-              <p>Try clearing search, topic, status, or availability filters.</p></mat-card
-            >
+            <mat-card class="p-6">
+              @if (vm.packs.length) {
+                <h2>No learning packs match these filters</h2>
+                <p>Try a different search or clear the filters to see every learning pack.</p>
+                <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+              } @else {
+                <h2>No learning packs available</h2>
+                <p>Your assigned learning packs will appear here when they are available.</p>
+              }
+            </mat-card>
           }
         </div>
       }
@@ -335,6 +341,12 @@ export class LearningPacksPage {
   }
   reload() {
     window.location.reload();
+  }
+  clearFilters() {
+    this.search.setValue('');
+    this.topic.setValue('all');
+    this.status.setValue('all');
+    this.availability.setValue('all');
   }
   errorMessage(error: unknown) {
     const status = (error as { status?: number })?.status;
