@@ -71,6 +71,7 @@ import {
           class="min-h-[34rem] w-full rounded border p-3 font-mono text-sm"
           [(ngModel)]="draftJson"
           (ngModelChange)="checkJson()"
+          [disabled]="busy()"
           spellcheck="false"
         ></textarea>
         @if (jsonError()) {
@@ -88,7 +89,7 @@ import {
             (click)="commit()"
           >
             Commit draft content</button
-          ><button mat-button type="button" (click)="load()">Refresh</button>
+          ><button mat-button type="button" [disabled]="busy() || loading()" (click)="load()">Refresh</button>
         </div>
         @if (dirty()) {
           <p class="m-0 text-sm">Save your changes before validating or committing.</p>
@@ -178,11 +179,18 @@ export class ReviewLearningPackImportPage {
     });
   }
   commit() {
-    this.run(this.#service.commit(this.importId), (result) => this.summary.set(result));
+    this.run(this.#service.commit(this.importId), (result) => {
+      this.summary.set(result);
+      this.record.update((item) => (item ? { ...item, status: 'completed' } : item));
+    });
   }
   canCommit() {
     const item = this.record();
-    return item?.valid === true && item.status.toLowerCase() === 'validated';
+    if (!item || item.status.trim().toLowerCase() !== 'validated') return false;
+
+    // Some API versions use the validated workflow state as the success signal
+    // and omit `valid`. Only an explicit false or returned errors should block.
+    return item.valid !== false && !(item.validationErrors?.length ?? 0);
   }
   parseDraft() {
     try {

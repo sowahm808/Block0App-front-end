@@ -53,6 +53,9 @@ The frontend already calls backend resources such as `/learning-packs`, `/capsul
 
 Use the following process to upload content safely into the database.
 
+For the complete API contract, workflow state machine, error responses, concurrency rules, and backend test checklist
+used by the current admin UI, see [Learning Pack Import Backend Update Guide](learning-pack-import-backend-update-guide.md).
+
 ### Step 1: Prepare an import file
 
 Create a CSV or JSON file using stable external IDs so repeated imports are idempotent. JSON is preferred because choices, rationales, and memory fields are nested.
