@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { catchError, combineLatest, debounceTime, map, of, startWith, switchMap } from 'rxjs';
+import { catchError, combineLatest, debounceTime, map, of, startWith } from 'rxjs';
 import { ScenarioDataService } from './scenario-data.service';
 import { ClinicalScenario, ScenarioMode, ScenarioStatus } from './scenario.models';
 

@@ -37,12 +37,6 @@ interface TeamMember {
   helpRequest?: 'Help requested' | 'No help request' | 'Hidden';
 }
 
-interface TeamVm {
-  data: TeamDashboard;
-  loading: boolean;
-  error: boolean;
-}
-
 type TeamAction = 'Encourage' | 'Check On' | 'Celebrate';
 
 const FALLBACK_TEAM: TeamDashboard = {
