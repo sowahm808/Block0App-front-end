@@ -141,6 +141,45 @@ describe('learning content UI', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Cardio Basics');
   });
 
+  it('learning-packs page clears filters from the no-results state', async () => {
+    await TestBed.configureTestingModule({
+      imports: [LearningPacksPage],
+      providers: [
+        provideNoopAnimations(),
+        provideRouter([]),
+        { provide: LearningPacksService, useValue: { list: () => of([{ id: 'lp1', title: 'Cardio Basics' }]) } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(LearningPacksPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.search.setValue('missing');
+    await new Promise((resolve) => setTimeout(resolve, 175));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No learning packs match these filters');
+    fixture.componentInstance.clearFilters();
+    await new Promise((resolve) => setTimeout(resolve, 175));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Cardio Basics');
+  });
+
+  it('learning-packs page distinguishes an empty assignment from filtered results', async () => {
+    await TestBed.configureTestingModule({
+      imports: [LearningPacksPage],
+      providers: [
+        provideNoopAnimations(),
+        provideRouter([]),
+        { provide: LearningPacksService, useValue: { list: () => of([]) } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(LearningPacksPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No learning packs available');
+    expect(fixture.nativeElement.textContent).not.toContain('match these filters');
+  });
+
   it('learning-pack detail page renders header, metrics, objectives, capsules, and actions', async () => {
     await TestBed.configureTestingModule({
       imports: [LearningPackDetailPage],
