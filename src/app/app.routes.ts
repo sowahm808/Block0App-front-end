@@ -146,6 +146,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
+        canMatch: [roleMatchGuard],
         canActivate: [roleGuard],
         data: { roles: ['Administrator', 'SuperAdministrator'] },
         loadChildren: () => import('./features/admin/routes'),

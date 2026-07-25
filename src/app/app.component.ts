@@ -17,6 +17,8 @@ export class AppComponent implements OnInit {
   #theme = inject(ThemeService);
 
   ngOnInit() {
+    // Injection initializes the persisted theme before the first routed view renders.
+    void this.#theme;
     if (this.#store.accessToken() && !this.#store.user()) {
       this.#auth.loadProfile().subscribe({ error: () => this.#store.clear() });
     }

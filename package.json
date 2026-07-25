@@ -3,6 +3,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build --configuration production",
+    "format:check": "prettier --check eslint.config.mjs package.json src/app/app.routes.ts src/app/app.routes.spec.ts docs/remaining-features-backend-update-guide.md",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
