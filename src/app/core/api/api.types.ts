@@ -50,15 +50,31 @@ export interface ContentReviewChoice {
 export interface ContentReviewExplanation {
   correctChoiceId?: string;
   correctRationale?: string;
-  memoryTip?: string;
+  incorrectRationales?: Record<string, string>;
   reference?: string;
+  // Supported for compatibility with older detail responses.
+  memoryTip?: string;
+  memory?: {
+    tip?: string;
+  };
 }
 
 export interface ContentReviewContent {
-  stem?: string;
+  id?: string;
+  externalId?: string;
   title?: string;
+  stem?: string;
+  status?: string;
+  learningPackId?: string;
+  capsuleId?: string;
+  type?: string;
+  difficulty?: string;
+  sequence?: number;
+  description?: string;
+  objectivesSummary?: string;
   choices?: ContentReviewChoice[];
   explanation?: ContentReviewExplanation;
+  // Legacy detail responses may expose these fields at content level.
   memoryTip?: string;
   reference?: string;
 }
@@ -69,15 +85,22 @@ export interface ContentReviewItem {
   entityId: string;
   status: string;
   title?: string;
-  notes?: string;
-  reviewerId?: string;
-  reviewedAtUtc?: string;
+  notes?: string | null;
+  reviewerId?: string | null;
+  reviewedAtUtc?: string | null;
   version?: number;
   content: ContentReviewContent;
+  importAudit?: {
+    sourceFileName?: string;
+    importedBy?: string;
+    importedAtUtc?: string;
+  };
 }
 
 export interface ContentReviewListResponse {
   data: ContentReviewItem[];
+  total?: number;
+  nextCursor?: string;
 }
 
 export type ContentReviewDetailResponse = ContentReviewItem | { data: ContentReviewItem };
