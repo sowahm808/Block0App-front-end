@@ -1,84 +1,14 @@
-import { AsyncPipe, DatePipe, TitleCasePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-} from '@angular/core';
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import {
-  catchError,
-  map,
-  of,
-  startWith,
-  switchMap,
-} from 'rxjs';
+import { catchError, map, of, startWith, switchMap } from 'rxjs';
 
 import { ApiService } from '../../core/api/api.service';
+import { ContentReviewItem, ContentReviewListResponse } from '../../core/api/api.types';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
-
-interface ReviewChoice {
-  id: string;
-  label?: string;
-  text: string;
-}
-
-interface ReviewExplanation {
-  correctChoiceId?: string;
-  correctRationale?: string;
-  incorrectRationales?: Record<string, string>;
-  reference?: string;
-  memory?: {
-    tip?: string;
-  };
-}
-
-interface ReviewContent {
-  id?: string;
-  externalId?: string;
-  title?: string;
-  stem?: string;
-  status?: string;
-  learningPackId?: string;
-  capsuleId?: string;
-  type?: string;
-  difficulty?: string;
-  sequence?: number;
-  topic?: string;
-  description?: string;
-  objectivesSummary?: string;
-  tags?: string[];
-  choices?: ReviewChoice[];
-  explanation?: ReviewExplanation;
-}
-
-interface ContentReviewItem {
-  id: string;
-  title?: string;
-  status: string;
-  entityType: string;
-  entityId: string;
-  notes?: string | null;
-  reviewerId?: string | null;
-  reviewedAtUtc?: string | null;
-  updatedAt?: string;
-  createdAt?: string;
-  importId?: string;
-  version?: number;
-  content: ReviewContent;
-  importAudit?: {
-    sourceFileName?: string;
-    importedAtUtc?: string;
-  };
-}
-
-interface ContentReviewResponse {
-  data: ContentReviewItem[];
-  nextCursor?: string;
-  total?: number;
-}
 
 type ApiState<T> =
   | { status: 'loading' }
@@ -91,7 +21,6 @@ type ApiState<T> =
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
     TitleCasePipe,
     RouterLink,
     PageHeaderComponent,
@@ -101,19 +30,13 @@ type ApiState<T> =
   ],
   template: `
     <section class="grid gap-6">
-      <b0-page-header
-        title="Review Workspace"
-        description="Content-review records prioritized for reviewer action."
-      />
+      <b0-page-header title="Review Workspace" description="Content-review records prioritized for reviewer action." />
 
       @if (state$ | async; as state) {
         @if (state.status === 'loading') {
           <b0-loading-skeleton [rows]="6" />
         } @else if (state.status === 'error') {
-          <b0-error-state
-            [message]="state.message"
-            (retry)="reload()"
-          />
+          <b0-error-state [message]="state.message" (retry)="reload()" />
         } @else if (state.status === 'empty') {
           <b0-empty-state
             title="No content awaiting review"
@@ -126,13 +49,9 @@ type ApiState<T> =
               {{ state.data.length === 1 ? 'record' : 'records' }}
             </span>
 
-            <span>
-              {{ countByStatus(state.data, 'draft') }} draft
-            </span>
+            <span> {{ countByStatus(state.data, 'draft') }} draft </span>
 
-            <span>
-              {{ countByStatus(state.data, 'approved') }} approved
-            </span>
+            <span> {{ countByStatus(state.data, 'approved') }} approved </span>
           </div>
 
           <div class="review-grid">
@@ -169,10 +88,7 @@ type ApiState<T> =
                     @if (item.content.choices?.length) {
                       <div class="choice-list">
                         @for (choice of item.content.choices; track choice.id) {
-                          <div
-                            class="choice-row"
-                            [class.choice-row--correct]="isCorrectChoice(item, choice.id)"
-                          >
+                          <div class="choice-row" [class.choice-row--correct]="isCorrectChoice(item, choice.id)">
                             <span class="choice-label">
                               {{ choice.label || choice.id }}
                             </span>
@@ -194,11 +110,7 @@ type ApiState<T> =
                   </div>
                 } @else {
                   <p class="content-description">
-                    {{
-                      item.content.description ||
-                        item.content.objectivesSummary ||
-                        'No description provided.'
-                    }}
+                    {{ item.content.description || item.content.objectivesSummary || 'No description provided.' }}
                   </p>
                 }
 
@@ -235,15 +147,6 @@ type ApiState<T> =
                       <dd>{{ item.importAudit?.sourceFileName }}</dd>
                     </div>
                   }
-
-                  @if (item.updatedAt || item.createdAt) {
-                    <div>
-                      <dt>Last updated</dt>
-                      <dd>
-                        {{ item.updatedAt || item.createdAt | date: 'medium' }}
-                      </dd>
-                    </div>
-                  }
                 </dl>
 
                 @if (item.notes) {
@@ -254,12 +157,7 @@ type ApiState<T> =
                 }
 
                 <div class="review-card__actions">
-                  <a
-                    class="primary-action"
-                    [routerLink]="['/review/content', item.id]"
-                  >
-                    Review content
-                  </a>
+                  <a class="primary-action" [routerLink]="['/review/content', item.id]"> Review content </a>
                 </div>
               </article>
             }
@@ -291,7 +189,7 @@ type ApiState<T> =
 
       .review-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
         gap: 1.25rem;
         align-items: start;
       }
@@ -499,49 +397,38 @@ export class AdminContentReviewQueuePage {
 
   readonly state$ = this.#route.data.pipe(
     switchMap((routeData) => {
-      const apiPath = String(
-        routeData['apiPath'] ?? '/review/content',
-      );
+      const apiPath = String(routeData['apiPath'] ?? '/review/content');
 
-      return this.#api
-        .get<ContentReviewResponse | ContentReviewItem[]>(apiPath)
-        .pipe(
-          map((response): ApiState<ContentReviewItem[]> => {
-            const items = Array.isArray(response)
-              ? response
-              : response?.data ?? [];
+      return this.#api.get<ContentReviewListResponse | ContentReviewItem[]>(apiPath).pipe(
+        map((response): ApiState<ContentReviewItem[]> => {
+          const items = Array.isArray(response) ? response : (response?.data ?? []);
 
-            if (!items.length) {
-              return { status: 'empty' };
-            }
+          if (!items.length) {
+            return { status: 'empty' };
+          }
 
-            return {
-              status: 'loaded',
-              data: items,
-            };
-          }),
+          return {
+            status: 'loaded',
+            data: items,
+          };
+        }),
 
-          startWith({
-            status: 'loading',
+        startWith({
+          status: 'loading',
+        } satisfies ApiState<ContentReviewItem[]>),
+
+        catchError((error: unknown) =>
+          of({
+            status: 'error',
+            message: this.errorMessage(error),
           } satisfies ApiState<ContentReviewItem[]>),
-
-          catchError((error: unknown) =>
-            of({
-              status: 'error',
-              message: this.errorMessage(error),
-            } satisfies ApiState<ContentReviewItem[]>),
-          ),
-        );
+        ),
+      );
     }),
   );
 
   displayTitle(item: ContentReviewItem): string {
-    return (
-      item.title ||
-      item.content.title ||
-      item.content.stem ||
-      item.entityId
-    );
+    return item.title || item.content.title || item.content.stem || item.entityId;
   }
 
   entityTypeLabel(entityType: string): string {
@@ -556,35 +443,21 @@ export class AdminContentReviewQueuePage {
   }
 
   statusLabel(status: string): string {
-    return status
-      .replaceAll('_', ' ')
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    return status.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  countByStatus(
-    items: ContentReviewItem[],
-    status: string,
-  ): number {
-    return items.filter(
-      (item) => this.normalizedStatus(item.status) === status,
-    ).length;
+  countByStatus(items: ContentReviewItem[], status: string): number {
+    return items.filter((item) => this.normalizedStatus(item.status) === status).length;
   }
 
-  isCorrectChoice(
-    item: ContentReviewItem,
-    choiceId: string,
-  ): boolean {
-    const correctChoiceId =
-      item.content.explanation?.correctChoiceId;
+  isCorrectChoice(item: ContentReviewItem, choiceId: string): boolean {
+    const correctChoiceId = item.content.explanation?.correctChoiceId;
 
     if (!correctChoiceId) {
       return false;
     }
 
-    return (
-      choiceId.trim().toLowerCase() ===
-      correctChoiceId.trim().toLowerCase()
-    );
+    return choiceId.trim().toLowerCase() === correctChoiceId.trim().toLowerCase();
   }
 
   reload(): void {

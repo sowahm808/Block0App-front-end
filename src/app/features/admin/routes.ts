@@ -128,7 +128,8 @@ export default [
   {
     path: 'content-review',
     data: page('Content review'),
-    loadComponent: () => import('./admin-content-review-queue.page').then((m) => m.AdminContentReviewQueuePage),
+    loadComponent: () =>
+      import('../content-review/admin-content-review-queue.page').then((m) => m.AdminContentReviewQueuePage),
   },
   {
     path: 'announcements',
