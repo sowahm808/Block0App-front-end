@@ -69,6 +69,10 @@ export interface ContentReviewItem {
   entityId: string;
   status: string;
   title?: string;
+  notes?: string;
+  reviewerId?: string;
+  reviewedAtUtc?: string;
+  version?: number;
   content: ContentReviewContent;
 }
 

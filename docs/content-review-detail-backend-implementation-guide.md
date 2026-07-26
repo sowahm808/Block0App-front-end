@@ -92,3 +92,59 @@ the case-insensitive comparison.
 
 Finally, exercise the endpoint through the deployed reverse proxy to confirm `/api/v1/review/content/:reviewId` is sent
 to Express rather than an SPA or health fallback, and include this path in API/OpenAPI documentation and monitoring.
+
+## Reviewer decision endpoints
+
+Implement these handlers in the same authenticated review router as the detail endpoint. The Angular `ApiService` adds
+the `/api/v1` base path, so the client paths and public HTTP paths are:
+
+| Decision        | Client path                                      | Public path                                             | Resulting status    | Notes    |
+| --------------- | ------------------------------------------------ | ------------------------------------------------------- | ------------------- | -------- |
+| Approve         | `POST /review/content/:reviewId/approve`         | `POST /api/v1/review/content/:reviewId/approve`         | `approved`          | Optional |
+| Request changes | `POST /review/content/:reviewId/request-changes` | `POST /api/v1/review/content/:reviewId/request-changes` | `changes_requested` | Required |
+| Reject          | `POST /review/content/:reviewId/reject`          | `POST /api/v1/review/content/:reviewId/reject`          | `rejected`          | Required |
+
+All three accept JSON shaped as `{ "notes": "Reviewer comments" }` and return the updated `ContentReviewItem`, either
+directly or in the existing `{ "data": item }` envelope. Do not introduce a parallel route contract if the backend
+already provides equivalent action routes; update the frontend service to that established contract instead.
+
+### Handler workflow
+
+Each route must apply authentication and `requirePermission('content.review')`, validate the decoded `reviewId` using
+the project's opaque-ID rules, and validate that `notes` is a string. Trim notes before persistence; reject blank notes
+for `request-changes` and `reject`. Within one transaction:
+
+1. Load the review record by review document ID and return `404` if it does not exist.
+2. Validate the current-to-target status transition. Approved and rejected records are final unless the product has an
+   explicit, separately authorized reopening workflow.
+3. If optimistic concurrency is enabled, compare the expected version supplied using the project's existing mechanism
+   (request DTO, `If-Match`, or ETag) and return `409` on mismatch.
+4. Set `status` to the value in the table, persist `notes`, set `reviewerId` from the authenticated principal (never
+   from request JSON), and set `reviewedAtUtc` to the server's current UTC timestamp.
+5. Increment `version` when the model uses optimistic concurrency, save atomically, and return the stored record.
+
+Approval changes only the review record. It must **not** publish or mutate the underlying learning-pack content unless
+the existing domain workflow already defines that operation as part of approval. Review approval and publication
+should otherwise remain separately authorized and auditable actions.
+
+### Response and error contract
+
+Use the API's normal Problem Details representation and preserve these semantics:
+
+- `400` — malformed JSON, invalid/blank review ID, or a non-string notes value.
+- `401` — missing or expired authentication.
+- `403` — authenticated principal lacks `content.review`.
+- `404` — no review document exists for `reviewId`.
+- `409` — optimistic-concurrency version conflict.
+- `422` — required notes are blank or the status transition is invalid.
+
+Never fall through to, proxy to, or use the health endpoint as a fallback for any review route.
+
+### Decision-route test checklist
+
+Add integration tests for every action that verify permission enforcement, opaque ID validation, persistence, and the
+returned DTO. Assert approve accepts empty notes; request-changes and reject reject whitespace-only notes with `422`;
+the statuses are exactly `approved`, `changes_requested`, and `rejected`; `reviewerId` cannot be spoofed; timestamps are
+UTC; versions increment and stale writes return `409` where applicable; final-state transitions are rejected; missing
+records return `404`; and approval does not change the publication state of the underlying content. Include a routing
+test proving these URLs are handled by the review router and never invoke the health handler.
