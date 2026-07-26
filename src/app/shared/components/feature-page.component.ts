@@ -161,10 +161,15 @@ export class FeaturePageComponent {
       description:
         data.description ??
         'This production feature is connected to the backend through typed API services and protected app routes.',
-      apiPath: data.apiPath ?? '/dashboard',
+      apiPath: this.#requiredApiPath(data.apiPath),
       primaryAction: data.primaryAction ?? 'Continue',
       primaryLink: data.primaryLink ?? '/dashboard',
     };
+  }
+
+  #requiredApiPath(apiPath: string | undefined): string {
+    if (!apiPath?.trim()) throw new Error('Feature route is missing its required apiPath configuration.');
+    return apiPath;
   }
 
   #toDisplayModel(data: unknown): DisplayModel {

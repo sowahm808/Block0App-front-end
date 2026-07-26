@@ -41,6 +41,43 @@ export interface TokenResponse {
 }
 export type CurrentUserResponse = CurrentUser;
 
+export interface ContentReviewChoice {
+  id: string;
+  label?: string;
+  text: string;
+}
+
+export interface ContentReviewExplanation {
+  correctChoiceId?: string;
+  correctRationale?: string;
+  memoryTip?: string;
+  reference?: string;
+}
+
+export interface ContentReviewContent {
+  stem?: string;
+  title?: string;
+  choices?: ContentReviewChoice[];
+  explanation?: ContentReviewExplanation;
+  memoryTip?: string;
+  reference?: string;
+}
+
+export interface ContentReviewItem {
+  id: string;
+  entityType: string;
+  entityId: string;
+  status: string;
+  title?: string;
+  content: ContentReviewContent;
+}
+
+export interface ContentReviewListResponse {
+  data: ContentReviewItem[];
+}
+
+export type ContentReviewDetailResponse = ContentReviewItem | { data: ContentReviewItem };
+
 export interface LearningPackCapsule {
   id?: string;
   capsuleId?: string;
