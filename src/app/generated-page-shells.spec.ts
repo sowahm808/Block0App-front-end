@@ -16,7 +16,6 @@ const generatedShells = [
   'src/app/features/content-review/reference-review.component.ts',
   'src/app/features/content-review/review-status-filter.component.ts',
   'src/app/features/content-review/reviewer-comment.component.ts',
-  'src/app/features/content-review/review-queue.page.ts',
   'src/app/features/notifications/notification-empty-state.component.ts',
   'src/app/features/notifications/notification-filter.component.ts',
   'src/app/features/notifications/notification-channel-toggle.component.ts',

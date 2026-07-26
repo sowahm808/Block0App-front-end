@@ -19,22 +19,17 @@ export default [
     canActivate: [permissionGuard],
     loadComponent: () => import('./review-dashboard.page').then((m) => m.ReviewDashboardPage),
   },
-    {
-    path: ':reviewId',
-    data: {
-      ...data,
-      title: 'Review Content',
-      permissions: ['content.review'],
-    },
-    canActivate: [permissionGuard],
-    loadComponent: () =>
-      import('./content-review-detail.page').then((m) => m.ContentReviewDetailPage),
-  },
   {
     path: 'content',
     data: { ...data, title: 'Review queue', apiPath: '/review/content', permissions: ['content.review'] },
     canActivate: [permissionGuard],
     loadComponent: () => import('./review-queue.page').then((m) => m.ReviewQueuePage),
+  },
+  {
+    path: 'content/:reviewId',
+    data: { ...data, title: 'Review Content', permissions: ['content.review'] },
+    canActivate: [permissionGuard],
+    loadComponent: () => import('./content-review-detail.page').then((m) => m.ContentReviewDetailPage),
   },
   {
     path: 'questions',
