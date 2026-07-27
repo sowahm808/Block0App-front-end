@@ -175,7 +175,8 @@ export default [
   },
   {
     path: 'audit',
-    data: page('Audit'),
+    data: { ...page('Audit Log'), permissions: ['audit.read'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-audit.page').then((m) => m.AdminAuditPage),
   },
   {

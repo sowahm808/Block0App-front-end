@@ -6,6 +6,46 @@ export interface ApiError {
   correlationId?: string;
   validationErrors?: Record<string, string[]>;
 }
+
+export interface AdminAuditEvent {
+  id: string;
+  action: string;
+  category?: string;
+  actorId?: string;
+  actorType?: string;
+  actorDisplayName?: string;
+  actorEmail?: string;
+  entityType?: string;
+  entityId?: string;
+  entityTitle?: string;
+  targetUserId?: string;
+  reviewId?: string;
+  challengeId?: string;
+  cohortId?: string;
+  learningPackId?: string;
+  assignmentId?: string;
+  notes?: string;
+  outcome?: 'success' | 'failed' | 'denied' | 'partial' | 'skipped' | 'pending' | string;
+  severity?: 'info' | 'warning' | 'error' | 'critical' | string;
+  createdAtUtc: string;
+  source?: string;
+  requestId?: string;
+  traceId?: string;
+  correlationId?: string;
+  changedFields?: string[];
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdminAuditListResponse {
+  items?: AdminAuditEvent[];
+  data?: AdminAuditEvent[];
+  auditEvents?: AdminAuditEvent[];
+  events?: AdminAuditEvent[];
+  nextCursor?: string;
+  total?: number;
+}
 export interface LoginCredentials {
   email: string;
   password: string;
