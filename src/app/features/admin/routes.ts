@@ -22,17 +22,20 @@ export default [
   },
   {
     path: 'challenges',
-    data: page('Challenges'),
+    data: { ...page('Challenges'), permissions: ['admin.challenges.read'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-challenge-list.page').then((m) => m.AdminChallengeListPage),
   },
   {
     path: 'challenges/new',
-    data: page('New challenge'),
+    data: { ...page('New challenge'), permissions: ['admin.challenges.write'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-challenge-create.page').then((m) => m.AdminChallengeCreatePage),
   },
   {
     path: 'challenges/:id',
-    data: page('Edit challenge'),
+    data: { ...page('Edit challenge'), permissions: ['admin.challenges.read'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-challenge-edit.page').then((m) => m.AdminChallengeEditPage),
   },
   {
