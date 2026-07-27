@@ -40,17 +40,20 @@ export default [
   },
   {
     path: 'cohorts',
-    data: page('Cohorts'),
+    data: { ...page('Cohorts'), permissions: ['cohorts.read'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-cohort-list.page').then((m) => m.AdminCohortListPage),
   },
   {
     path: 'cohorts/new',
-    data: page('New cohort'),
+    data: { ...page('New cohort'), permissions: ['cohorts.create'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-cohort-create.page').then((m) => m.AdminCohortCreatePage),
   },
   {
     path: 'cohorts/:id',
-    data: page('Cohort detail'),
+    data: { ...page('Cohort detail'), permissions: ['cohorts.read'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-cohort-detail.page').then((m) => m.AdminCohortDetailPage),
   },
   {
