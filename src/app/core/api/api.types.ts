@@ -484,3 +484,57 @@ export interface TodayChallengeDto {
   releaseAtUtc?: string;
   cohortTimeZone?: string;
 }
+export interface AdminCohortListItem {
+  id: string;
+  code?: string;
+  name: string;
+  description?: string;
+  status?: string;
+  challengeId?: string;
+  challengeTitle?: string;
+  challengeCode?: string;
+  startsAtUtc?: string | null;
+  endsAtUtc?: string | null;
+  enrollmentOpensAtUtc?: string | null;
+  enrollmentClosesAtUtc?: string | null;
+  capacity?: number | null;
+  memberCount?: number;
+  activeScholarCount?: number;
+  pendingEnrollmentCount?: number;
+  completedScholarCount?: number;
+  mentorCount?: number;
+  mentorIds?: string[];
+  mentorNames?: string[];
+  learningPackCount?: number;
+  assignmentCount?: number;
+  timezone?: string;
+  createdAtUtc?: string;
+  updatedAtUtc?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  archivedAtUtc?: string | null;
+  version?: number;
+}
+
+export interface AdminCohortListResponse {
+  items?: AdminCohortListItem[];
+  data?: AdminCohortListItem[];
+  cohorts?: AdminCohortListItem[];
+  nextCursor?: string;
+  total?: number;
+}
+
+export interface SaveAdminCohortRequest {
+  name: string;
+  description?: string;
+  challengeId: string;
+  capacity?: number | null;
+  startsAtUtc?: string | null;
+  endsAtUtc?: string | null;
+  enrollmentOpensAtUtc?: string | null;
+  enrollmentClosesAtUtc?: string | null;
+  timezone?: string;
+  mentorIds?: string[];
+  status?: string;
+  version?: number;
+}
