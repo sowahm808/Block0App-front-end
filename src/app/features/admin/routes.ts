@@ -169,7 +169,8 @@ export default [
   },
   {
     path: 'reports',
-    data: page('Reports'),
+    data: { ...page('Reports'), permissions: ['reports.read'] },
+    canActivate: [permissionGuard],
     loadComponent: () => import('./admin-reports.page').then((m) => m.AdminReportsPage),
   },
   {

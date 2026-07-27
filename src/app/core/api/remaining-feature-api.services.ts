@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { map } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   AdminChallenge,
@@ -12,7 +13,23 @@ import {
   BulkLearningPackAssignmentRequest,
   LearningPackAssignmentResponse,
   SaveAdminCohortRequest,
+  AdminReportOverview,
+  ChallengeReportRow,
+  CohortReportRow,
+  LearningPackReportRow,
+  QuestionReportRow,
+  ReportListResponse,
+  ReportQueryParams,
+  ScholarReportRow,
 } from './api.types';
+
+export function normalizeReportList<T>(response: ReportListResponse<T> | T[]): { items: T[]; total: number; nextCursor?: string; updatedAtUtc?: string } {
+  if (Array.isArray(response)) return { items: response, total: response.length };
+  if (!response || typeof response !== 'object') throw new Error('The reporting endpoint returned an invalid response.');
+  const items = response.items ?? response.data;
+  if (!Array.isArray(items)) throw new Error('The reporting endpoint response must contain an items or data array.');
+  return { items, total: response.total ?? items.length, nextCursor: response.nextCursor, updatedAtUtc: response.updatedAtUtc };
+}
 
 export interface CursorPage<T> {
   items: T[];
@@ -258,8 +275,16 @@ export class AdminCertificateApiService extends EndpointApi {
 }
 @Injectable({ providedIn: 'root' })
 export class AdminReportApiService extends EndpointApi {
-  constructor() {
-    super('/admin/reports');
+  readonly #reportsApi = inject(ApiService);
+  constructor() { super('/admin/reports'); }
+  overview(params: ReportQueryParams) { return this.#reportsApi.get<AdminReportOverview>('/admin/reports/overview', params); }
+  scholars(params: ReportQueryParams) { return this.#list<ScholarReportRow>('/admin/reports/scholars', params); }
+  cohorts(params: ReportQueryParams) { return this.#list<CohortReportRow>('/admin/reports/cohorts', params); }
+  challenges(params: ReportQueryParams) { return this.#list<ChallengeReportRow>('/admin/reports/challenges', params); }
+  learningPacks(params: ReportQueryParams) { return this.#list<LearningPackReportRow>('/admin/reports/learning-packs', params); }
+  questions(params: ReportQueryParams) { return this.#list<QuestionReportRow>('/admin/reports/questions', params); }
+  #list<T>(path: string, params: ReportQueryParams) {
+    return this.#reportsApi.get<ReportListResponse<T> | T[]>(path, params).pipe(map((response) => normalizeReportList<T>(response)));
   }
 }
 @Injectable({ providedIn: 'root' })

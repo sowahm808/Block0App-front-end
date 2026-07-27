@@ -41,6 +41,43 @@ export interface TokenResponse {
 }
 export type CurrentUserResponse = CurrentUser;
 
+export interface ReportFilter {
+  startAtUtc?: string;
+  endAtUtc?: string;
+  challengeId?: string;
+  cohortId?: string;
+  scholarSearch?: string;
+  mentorId?: string;
+  status?: string;
+}
+export type ReportQueryParams = Record<string, string | number | boolean>;
+export interface ReportListResponse<T> { items?: T[]; data?: T[]; total?: number; nextCursor?: string; updatedAtUtc?: string; }
+export interface ReportOption { id: string; label: string; }
+export interface ReportTrendPoint { date: string; value: number; label?: string; }
+export interface ReportDistributionPoint { key: string; label: string; value: number; }
+export interface AdminReportOverview {
+  activeScholarCount: number;
+  activeCohortCount: number;
+  activeChallengeCount: number;
+  assignedLearningPackCount: number;
+  completionRate?: number;
+  averageAccuracy?: number;
+  overdueAssignmentCount: number;
+  readinessRate?: number;
+  atRiskScholarCount?: number;
+  pendingReviewCount?: number;
+  completionTrend?: ReportTrendPoint[];
+  assignmentStatus?: ReportDistributionPoint[];
+  challenges?: ReportOption[];
+  cohorts?: ReportOption[];
+  updatedAtUtc?: string;
+}
+export interface ScholarReportRow { scholarId: string; displayName: string; email?: string; cohortName?: string; assignedPackCount: number; completedPackCount: number; completionRate?: number; averageAccuracy?: number; readinessBand?: string; overdueCount: number; lastActivityAtUtc?: string; riskLevel?: string; }
+export interface CohortReportRow { cohortId: string; cohortName: string; challengeTitle?: string; scholarCount: number; completionRate?: number; averageAccuracy?: number; readinessRate?: number; overdueCount: number; mentorNames?: string[]; lastActivityAtUtc?: string; healthStatus?: string; }
+export interface ChallengeReportRow { challengeId: string; title: string; status?: string; cohortCount: number; scholarCount: number; learningPackCount: number; completionRate?: number; averageAccuracy?: number; readinessRate?: number; startAtUtc?: string; endAtUtc?: string; }
+export interface LearningPackReportRow { learningPackId: string; code?: string; title: string; topic?: string; status?: string; assignedCount: number; startedCount: number; completedCount: number; completionRate?: number; averageAccuracy?: number; averageTimeMinutes?: number; overdueCount: number; }
+export interface QuestionReportRow { questionId: string; title: string; learningPackTitle?: string; capsuleId?: string; attemptCount: number; correctRate?: number; mostSelectedWrongChoice?: string; difficulty?: string; status?: string; reviewFlags?: string[]; }
+
 export interface ContentReviewChoice {
   id: string;
   label?: string;
