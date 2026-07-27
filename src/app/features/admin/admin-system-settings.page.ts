@@ -115,7 +115,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
             </mat-nav-list>
             <mat-divider />
             <p class="meta">
-              <strong>{{ settings()?.environment?.environmentName || 'Environment' }}</strong
+              <strong>{{ settings()?.environment?.deploymentName || 'Environment' }}</strong
               ><br />API: {{ apiBaseUrl }}<br />
               @if (settings()?.updatedAtUtc) {
                 Last updated {{ settings()?.updatedAtUtc | date: 'medium' }}
