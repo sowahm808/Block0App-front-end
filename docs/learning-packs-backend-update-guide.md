@@ -1,11 +1,28 @@
 # Learning Packs Backend Update Guide
 
-The frontend route `/learning-packs` now renders a purpose-built Learning Packs list. Update the backend `GET /learning-packs` endpoint so authenticated scholars receive the fields needed for filters, status chips, progress metrics, permitted accuracy summaries, and pack actions.
+The frontend route `/learning-packs` renders a purpose-built, role-aware Learning Packs list. It selects the collection API from the authenticated user's roles: administrators use the administrative catalog while every other authenticated role uses the user-facing endpoint. The page uses scholar-specific assignment language only for scholars; mentors, reviewers, and other non-scholar roles see catalog-oriented language.
+
+## Frontend endpoint selection
+
+| Authenticated role                                          | Collection request          | Expected visibility                                                                                                |
+| ----------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `Administrator`, `SuperAdministrator`                       | `GET /admin/learning-packs` | The complete administrative catalog, including drafts when authorized.                                             |
+| `Scholar`                                                   | `GET /learning-packs`       | Packs assigned or otherwise visible to the current scholar, with learner progress.                                 |
+| `Mentor`, `ContentReviewer`, other authenticated user roles | `GET /learning-packs`       | Published packs visible to that role. Do not require a scholar assignment unless that is an explicit product rule. |
+
+If a user has more than one role and either administrative role is present, the frontend gives the administrative endpoint precedence. Keep authorization enforcement on the backend; endpoint selection is not an authorization boundary.
 
 ## Route and auth
 
 ```http
 GET /learning-packs?search=&topic=&status=&availability=&sort=
+Authorization: Bearer <access token>
+```
+
+Administrators make the equivalent request against:
+
+```http
+GET /admin/learning-packs?search=&topic=&status=&availability=&sort=
 Authorization: Bearer <access token>
 ```
 
@@ -21,7 +38,7 @@ The current frontend can filter client-side from the returned array, but the bac
 
 ## Response shape
 
-Return a JSON array. Each item should represent one learning pack assigned or visible to the current scholar.
+Return a JSON array. Each item should represent one learning pack assigned or visible to the current user.
 
 ```json
 [
@@ -51,6 +68,21 @@ Return a JSON array. Each item should represent one learning pack assigned or vi
   }
 ]
 ```
+
+For compatibility with existing backend pagination conventions, the frontend also accepts the array in `items`, `learningPacks`, `results`, or `value`, either at the response root or inside `data`. Prefer one consistent envelope across both endpoints; for example:
+
+```json
+{
+  "items": [
+    {
+      "id": "lp_cardiology_day_01",
+      "title": "Cardiology Foundations"
+    }
+  ]
+}
+```
+
+Do not return HTTP `200` with an empty placeholder collection merely because the caller is not a scholar. Return the role-appropriate catalog, or return `403` when that role is intentionally forbidden. This distinction lets the frontend show a permission error instead of a misleading “0 of 0” result.
 
 ## Field contract
 
@@ -98,6 +130,8 @@ Only return an accuracy number when the current scholar is permitted to see it. 
 4. Return a deterministic recommended order, usually current-day packs first, then in-progress packs, then upcoming packs.
 5. Add backend tests for each filter value: `Not Started`, `In Progress`, `Completed`, `Locked`, and all availability states.
 6. Seed at least four packs in non-production environments so the frontend can verify each action label: Start Pack, Continue Pack, Review Pack, and View Details.
+7. Add authorization and contract tests for administrators, reviewers, mentors, and scholars. Assert that `/admin/learning-packs` rejects non-administrators and that `/learning-packs` applies the intended visibility policy for every supported non-admin role.
+8. Return the same collection envelope and core field names from both endpoints so the shared frontend normalizer does not need role-specific DTO logic.
 
 # Learning Pack Detail Backend Update Guide
 
@@ -167,38 +201,38 @@ Authorization: Bearer <access token>
 
 ## Detail field contract
 
-| Field | Required | Notes |
-| --- | --- | --- |
-| `id` or `externalId` | Yes | Stable identifier used by `/learning-packs/:packId`. |
-| `code` | Recommended | Header pack code, for example `LP01`. |
-| `title` | Yes | Header pack title. |
-| `topic` | Yes | Header topic label. |
-| `progressPercentage` | Recommended | Header completion percentage. Frontend derives from capsule counts if absent. |
-| `objectives` | Yes | Ordered objective list for the Learning objectives section. |
-| `objectivesSummary` | Recommended | Fallback for list and search cards. |
-| `summary` or `description` | Yes | Pack summary section text. |
-| `capsuleCount` / `totalCapsules` | Yes | Total capsule summary metric. |
-| `completedCapsules` | Yes | Scholar-specific completed capsule metric. |
-| `questionCount` / `totalQuestions` | Yes | Total question summary metric. |
-| `completedQuestions` or `questionsAnswered` | Yes | Scholar-specific questions answered metric. |
-| `estimatedStudyMinutes` or `estimatedMinutes` | Yes | Estimated study time metric in minutes. |
-| `continueUrl` | When available | General continue URL; used as fallback for active capsule actions. |
-| `activeCapsuleUrl` | When in progress | Target for Continue Active Capsule. |
-| `nextCapsuleUrl` | When available | Target for Start Next Capsule. |
-| `capsules` | Yes | Ordered capsule row data for the capsule list. |
+| Field                                         | Required         | Notes                                                                         |
+| --------------------------------------------- | ---------------- | ----------------------------------------------------------------------------- |
+| `id` or `externalId`                          | Yes              | Stable identifier used by `/learning-packs/:packId`.                          |
+| `code`                                        | Recommended      | Header pack code, for example `LP01`.                                         |
+| `title`                                       | Yes              | Header pack title.                                                            |
+| `topic`                                       | Yes              | Header topic label.                                                           |
+| `progressPercentage`                          | Recommended      | Header completion percentage. Frontend derives from capsule counts if absent. |
+| `objectives`                                  | Yes              | Ordered objective list for the Learning objectives section.                   |
+| `objectivesSummary`                           | Recommended      | Fallback for list and search cards.                                           |
+| `summary` or `description`                    | Yes              | Pack summary section text.                                                    |
+| `capsuleCount` / `totalCapsules`              | Yes              | Total capsule summary metric.                                                 |
+| `completedCapsules`                           | Yes              | Scholar-specific completed capsule metric.                                    |
+| `questionCount` / `totalQuestions`            | Yes              | Total question summary metric.                                                |
+| `completedQuestions` or `questionsAnswered`   | Yes              | Scholar-specific questions answered metric.                                   |
+| `estimatedStudyMinutes` or `estimatedMinutes` | Yes              | Estimated study time metric in minutes.                                       |
+| `continueUrl`                                 | When available   | General continue URL; used as fallback for active capsule actions.            |
+| `activeCapsuleUrl`                            | When in progress | Target for Continue Active Capsule.                                           |
+| `nextCapsuleUrl`                              | When available   | Target for Start Next Capsule.                                                |
+| `capsules`                                    | Yes              | Ordered capsule row data for the capsule list.                                |
 
 ## Capsule field contract
 
-| Field | Required | Notes |
-| --- | --- | --- |
-| `id` or `externalId` | Yes | Stable capsule identifier for fallback links. |
-| `capsuleNumber` or `sequence` | Yes | Displayed as Capsule number and used for ordering. |
-| `title` | Yes | Capsule row title. |
-| `questionCount` or `totalQuestions` | Yes | Number of questions shown in the row. |
-| `status` / `progressStatus` | Yes | Use `not_started`, `in_progress`, `completed`, or `locked`. |
-| `completedAtUtc` or `completedAt` | When completed | Completion date shown in the row. Omit or null for incomplete capsules. |
-| `startUrl` | When startable | URL for a not-started capsule. |
-| `continueUrl` | When active/reviewable | URL for a started or completed capsule. |
+| Field                               | Required               | Notes                                                                   |
+| ----------------------------------- | ---------------------- | ----------------------------------------------------------------------- |
+| `id` or `externalId`                | Yes                    | Stable capsule identifier for fallback links.                           |
+| `capsuleNumber` or `sequence`       | Yes                    | Displayed as Capsule number and used for ordering.                      |
+| `title`                             | Yes                    | Capsule row title.                                                      |
+| `questionCount` or `totalQuestions` | Yes                    | Number of questions shown in the row.                                   |
+| `status` / `progressStatus`         | Yes                    | Use `not_started`, `in_progress`, `completed`, or `locked`.             |
+| `completedAtUtc` or `completedAt`   | When completed         | Completion date shown in the row. Omit or null for incomplete capsules. |
+| `startUrl`                          | When startable         | URL for a not-started capsule.                                          |
+| `continueUrl`                       | When active/reviewable | URL for a started or completed capsule.                                 |
 
 ## Detail implementation checklist
 
