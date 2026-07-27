@@ -170,6 +170,21 @@ export interface LearningPack {
   activeCapsuleUrl?: string;
   capsules?: LearningPackCapsule[];
 }
+export interface AdminLearningPack extends LearningPack {
+  id: string;
+  publicationStatus?: string;
+  reviewStatus?: string;
+  assignmentCount?: number;
+  updatedAtUtc?: string;
+}
+export interface AdminLearningPackListResponse {
+  items?: AdminLearningPack[];
+  data?: AdminLearningPack[];
+  total?: number;
+  nextCursor?: string;
+}
+export interface LearningPackAssignmentRequest { scholarIds: string[]; }
+export interface LearningPackAssignmentResponse { assignedCount: number; skippedCount?: number; }
 export interface DashboardLearningPack extends LearningPack {
   progress?: number;
   readinessLevel?: string;
