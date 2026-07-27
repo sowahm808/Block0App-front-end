@@ -3,6 +3,8 @@ import { map } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   AdminChallenge,
+  AdminAuditEvent,
+  AdminAuditListResponse,
   AdminChallengeListResponse,
   AdminCohortListItem,
   AdminCohortListResponse,
@@ -288,9 +290,16 @@ export class AdminReportApiService extends EndpointApi {
   }
 }
 @Injectable({ providedIn: 'root' })
-export class AdminAuditApiService extends EndpointApi {
-  constructor() {
-    super('/admin/audit');
+export class AdminAuditApiService {
+  readonly #auditApi = inject(ApiService);
+  list(params?: Record<string, string | number | boolean>) {
+    return this.#auditApi.get<AdminAuditListResponse | AdminAuditEvent[]>('/admin/audit', params);
+  }
+  detail(eventId: string) {
+    return this.#auditApi.get<AdminAuditEvent>(`/admin/audit/${encodeURIComponent(eventId)}`);
+  }
+  export(params?: Record<string, string | number | boolean>) {
+    return this.#auditApi.download('/admin/audit/export', params);
   }
 }
 @Injectable({ providedIn: 'root' })

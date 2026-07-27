@@ -11,6 +11,13 @@ export class ApiService {
       withCredentials: this.#withCredentials(),
     });
   }
+  download(path: string, params?: Record<string, string | number | boolean>) {
+    return this.#http.get(`${this.#base}${path}`, {
+      params: this.#params(params),
+      responseType: 'blob',
+      withCredentials: this.#withCredentials(),
+    });
+  }
   post<T>(path: string, body: unknown, options?: { headers?: Record<string, string> }) {
     return this.#http.post<T>(`${this.#base}${path}`, body, {
       headers: this.#headers(options?.headers),
