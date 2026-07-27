@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { permissionGuard } from '../../core/guards/permission.guard';
+import { systemSettingsUnsavedGuard } from './system-settings-unsaved.guard';
 const data = { roles: ['Administrator', 'SuperAdministrator'], pageCategory: 'admin' };
 const page = (name: string) => ({ ...data, title: name, apiPath: `/admin/${name.toLowerCase().replaceAll(' ', '-')}` });
 export default [
@@ -186,7 +187,9 @@ export default [
   },
   {
     path: 'system-settings',
-    data: page('System settings'),
+    data: { ...page('System settings'), permissions: ['system-settings.read'] },
+    canActivate: [permissionGuard],
+    canDeactivate: [systemSettingsUnsavedGuard],
     loadComponent: () => import('./admin-system-settings.page').then((m) => m.AdminSystemSettingsPage),
   },
   {

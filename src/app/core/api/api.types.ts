@@ -615,3 +615,28 @@ export interface SaveAdminCohortRequest {
   status?: string;
   version?: number;
 }
+
+export interface SystemSettings {
+  version: number;
+  schemaVersion: number;
+  updatedAtUtc?: string;
+  updatedBy?: string;
+  general: { academyName: string; supportEmail: string; defaultTimezone: string; defaultLocale: string; maintenanceMode: boolean };
+  academy: { allowSelfRegistration: boolean; requireEmailVerification: boolean; defaultScholarRole: string; defaultMentorRole: string };
+  challenges: { defaultDurationDays: number; defaultStartHourLocal: string; allowOverlappingChallenges: boolean; requirePublishedLearningPacks: boolean; autoCompleteAfterEndDate: boolean };
+  learningPacks: { requireContentApprovalBeforePublish: boolean; allowDraftAssignment: boolean; defaultAvailability: string; defaultAccuracyVisibility: boolean; maxCapsulesPerPack: number; maxQuestionsPerCapsule: number };
+  enrollment: { defaultCapacity: number; requireApproval: boolean; allowCohortTransfer: boolean; allowMultipleActiveCohorts: boolean };
+  notifications: { emailEnabled: boolean; smsEnabled: boolean; inAppEnabled: boolean; assignmentReminderDaysBeforeDue: number; overdueReminderFrequencyDays: number };
+  security: { requireAdministrativeMfa: boolean; sessionTimeoutMinutes: number; maxFailedLoginAttempts: number; passwordResetExpiryMinutes: number; auditRetentionDays: number };
+  imports: { maxUploadSizeMb: number; allowedExtensions: string[]; extractionTimeoutSeconds: number; requireValidationBeforeCommit: boolean };
+  reports: { defaultDateRangeDays: number; maxExportRows: number; cacheMinutes: number };
+  integrations: { emailProviderEnabled: boolean; smsProviderEnabled: boolean; storageProvider: string; emailProviderStatus?: string; smsProviderStatus?: string };
+  maintenance: { readOnlyMode: boolean; bannerMessage: string; bannerSeverity: string; bannerStartsAtUtc?: string; bannerEndsAtUtc?: string };
+  environment?: { environmentName?: string; frontendVersion?: string; backendVersion?: string; buildTimestamp?: string; apiBaseUrl?: string; firebaseProjectId?: string; storageBucketId?: string; databaseStatus?: string };
+}
+
+export interface SystemSettingsResponse { data?: SystemSettings; settings?: SystemSettings; usingDefaults?: boolean }
+export interface UpdateSystemSettingsRequest { version: number; settings: Omit<SystemSettings, 'version' | 'schemaVersion' | 'updatedAtUtc' | 'updatedBy' | 'environment'> }
+export interface SystemSettingsValidationResult { valid: boolean; errors?: Array<{ path: string; message: string }>; warnings?: string[] }
+export interface SystemSettingsHistoryItem { id: string; occurredAtUtc: string; administrator: string; category: string; changedFields: string[]; result: string }
+export interface SystemSettingsHistoryResponse { items: SystemSettingsHistoryItem[]; nextCursor?: string }

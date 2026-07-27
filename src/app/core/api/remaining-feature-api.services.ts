@@ -23,6 +23,8 @@ import {
   ReportListResponse,
   ReportQueryParams,
   ScholarReportRow,
+  SystemSettings, SystemSettingsHistoryResponse, SystemSettingsResponse,
+  SystemSettingsValidationResult, UpdateSystemSettingsRequest,
 } from './api.types';
 
 export function normalizeReportList<T>(response: ReportListResponse<T> | T[]): { items: T[]; total: number; nextCursor?: string; updatedAtUtc?: string } {
@@ -308,11 +310,37 @@ export class AdminAiApiService extends EndpointApi {
     super('/ai');
   }
 }
-@Injectable({ providedIn: 'root' })
-export class AdminSystemSettingsApiService extends EndpointApi {
-  constructor() {
-    super('/admin/system-settings');
+export function normalizeSystemSettings(response: SystemSettings | SystemSettingsResponse | Array<{ key: string; value: unknown }> | { items: Array<{ key: string; value: unknown }> }): SystemSettings {
+  let candidate: unknown = response;
+  if (!Array.isArray(response) && response && typeof response === 'object') {
+    const wrapper = response as SystemSettingsResponse & { items?: Array<{ key: string; value: unknown }> };
+    candidate = wrapper.data ?? wrapper.settings ?? wrapper.items ?? response;
   }
+  if (Array.isArray(candidate)) {
+    const expanded: Record<string, unknown> = {};
+    for (const entry of candidate) {
+      if (!entry || typeof entry.key !== 'string' || !('value' in entry)) throw new Error('The system-settings endpoint returned a malformed key/value list.');
+      const parts = entry.key.split('.'); let cursor = expanded;
+      parts.forEach((part: string, index: number) => { if (index === parts.length - 1) cursor[part] = entry.value; else cursor = (cursor[part] ??= {}) as Record<string, unknown>; });
+    }
+    candidate = expanded;
+  }
+  const value = candidate as Partial<SystemSettings> | null;
+  const required = ['general', 'academy', 'challenges', 'learningPacks', 'enrollment', 'notifications', 'security', 'imports', 'reports', 'integrations', 'maintenance'] as const;
+  if (!value || typeof value !== 'object' || typeof value.version !== 'number' || required.some((key) => !value[key] || typeof value[key] !== 'object')) {
+    throw new Error('The system-settings endpoint returned an unsupported response. No settings were changed.');
+  }
+  return value as SystemSettings;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AdminSystemSettingsApiService {
+  readonly #api = inject(ApiService);
+  getSettings() { return this.#api.get<SystemSettings | SystemSettingsResponse | Array<{ key: string; value: unknown }> | { items: Array<{ key: string; value: unknown }> }>('/admin/system-settings').pipe(map(normalizeSystemSettings)); }
+  validateSettings(request: UpdateSystemSettingsRequest) { return this.#api.post<SystemSettingsValidationResult>('/admin/system-settings/validate', request); }
+  updateSettings(request: UpdateSystemSettingsRequest) { return this.#api.put<SystemSettings | SystemSettingsResponse>('/admin/system-settings', request).pipe(map(normalizeSystemSettings)); }
+  resetCategory(category: string, version: number) { return this.#api.post<SystemSettings | SystemSettingsResponse>('/admin/system-settings/reset', { category, version }).pipe(map(normalizeSystemSettings)); }
+  history(params?: Record<string, string | number | boolean>) { return this.#api.get<SystemSettingsHistoryResponse>('/admin/system-settings/history', params); }
 }
 @Injectable({ providedIn: 'root' })
 export class AdminFeatureFlagApiService extends EndpointApi {
