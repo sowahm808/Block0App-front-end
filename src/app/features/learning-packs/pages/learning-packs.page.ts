@@ -1,5 +1,5 @@
 import { AsyncPipe, DecimalPipe, NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { catchError, combineLatest, debounceTime, map, of, shareReplay, startWith } from 'rxjs';
 import { LearningPacksService } from '../data-access/learning-packs.service';
 import { LearningPack } from '../../../core/api/api.types';
+import { AuthStore } from '../../../core/auth/auth.store';
 
 type PackStatusFilter = 'all' | 'not_started' | 'in_progress' | 'completed' | 'locked';
 type AvailabilityFilter = 'all' | 'available' | 'locked' | 'coming_soon';
@@ -45,7 +46,7 @@ interface LearningPackListVm {
     <header>
       <p class="eyebrow">Study content</p>
       <h1 id="packs-title">Learning Packs</h1>
-      <p>Find assigned packs, track capsule and question completion, and jump back into the right learning flow.</p>
+      <p>{{ pageDescription() }}</p>
     </header>
 
     <mat-card class="grid gap-4 p-4" aria-label="Learning pack filters">
@@ -160,7 +161,7 @@ interface LearningPackListVm {
                 <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
               } @else {
                 <h2>No learning packs available</h2>
-                <p>Your assigned learning packs will appear here when they are available.</p>
+                <p>{{ emptyDescription() }}</p>
               }
             </mat-card>
           }
@@ -190,6 +191,18 @@ interface LearningPackListVm {
 })
 export class LearningPacksPage {
   #packs = inject(LearningPacksService);
+  #auth = inject(AuthStore);
+  isScholar = computed(() => this.#auth.hasRole(['Scholar']));
+  pageDescription = computed(() =>
+    this.isScholar()
+      ? 'Find assigned packs, track capsule and question completion, and jump back into the right learning flow.'
+      : 'Browse the learning-pack catalog, review its content and availability, and open a pack for more detail.',
+  );
+  emptyDescription = computed(() =>
+    this.isScholar()
+      ? 'Your assigned learning packs will appear here when they are available.'
+      : 'Learning packs will appear here when they have been created and are visible to your role.',
+  );
   search = new FormControl('', { nonNullable: true });
   topic = new FormControl('all', { nonNullable: true });
   status = new FormControl<PackStatusFilter>('all', { nonNullable: true });
