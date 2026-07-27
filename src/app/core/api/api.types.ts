@@ -183,11 +183,72 @@ export interface AdminLearningPackListResponse {
   total?: number;
   nextCursor?: string;
 }
-export interface LearningPackAssignmentRequest { scholarIds: string[]; }
-export interface LearningPackAssignmentResponse { assignedCount?: number; createdCount?: number; skippedCount?: number; failedCount?: number; failures?: Array<{ scholarId: string; learningPackId: string; message: string }> }
-export interface BulkLearningPackAssignmentRequest { scholarIds: string[]; learningPackIds: string[]; availableFromUtc?: string; dueAtUtc?: string; notes?: string; }
-export interface AdminUser { uid: string; email?: string; displayName?: string; emailVerified?: boolean; disabled?: boolean; status?: string; roles?: string[]; role?: string; mfaEnabled?: boolean; adminMfaRequired?: boolean; activeCohortId?: string; activeCohortName?: string; photoUrl?: string; authProvider?: string; lastSignInAtUtc?: string; }
-export interface AdminUserListResponse { items?: AdminUser[]; data?: AdminUser[]; total?: number; nextCursor?: string; }
+export type ChallengeLifecycleStatus = 'draft' | 'scheduled' | 'active' | 'completed' | 'archived' | string;
+export interface AdminChallenge {
+  id: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  status?: ChallengeLifecycleStatus;
+  publicationStatus?: ChallengeLifecycleStatus;
+  startsAtUtc?: string | null;
+  endsAtUtc?: string | null;
+  durationDays?: number | null;
+  audience?: string | null;
+  cohortCount?: number;
+  enrollmentCount?: number;
+  learningPackCount?: number;
+  updatedAtUtc?: string;
+  updatedUtc?: string;
+  createdAtUtc?: string;
+  createdUtc?: string;
+}
+export interface AdminChallengeListResponse {
+  items?: AdminChallenge[];
+  data?: AdminChallenge[];
+  total?: number;
+  nextCursor?: string;
+}
+export interface LearningPackAssignmentRequest {
+  scholarIds: string[];
+}
+export interface LearningPackAssignmentResponse {
+  assignedCount?: number;
+  createdCount?: number;
+  skippedCount?: number;
+  failedCount?: number;
+  failures?: Array<{ scholarId: string; learningPackId: string; message: string }>;
+}
+export interface BulkLearningPackAssignmentRequest {
+  scholarIds: string[];
+  learningPackIds: string[];
+  availableFromUtc?: string;
+  dueAtUtc?: string;
+  notes?: string;
+}
+export interface AdminUser {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  emailVerified?: boolean;
+  disabled?: boolean;
+  status?: string;
+  roles?: string[];
+  role?: string;
+  mfaEnabled?: boolean;
+  adminMfaRequired?: boolean;
+  activeCohortId?: string;
+  activeCohortName?: string;
+  photoUrl?: string;
+  authProvider?: string;
+  lastSignInAtUtc?: string;
+}
+export interface AdminUserListResponse {
+  items?: AdminUser[];
+  data?: AdminUser[];
+  total?: number;
+  nextCursor?: string;
+}
 export interface DashboardLearningPack extends LearningPack {
   progress?: number;
   readinessLevel?: string;

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
-import { AdminLearningPack, AdminLearningPackListResponse, AdminUser, AdminUserListResponse, BulkLearningPackAssignmentRequest, LearningPackAssignmentResponse } from './api.types';
+import { AdminChallenge, AdminChallengeListResponse, AdminLearningPack, AdminLearningPackListResponse, AdminUser, AdminUserListResponse, BulkLearningPackAssignmentRequest, LearningPackAssignmentResponse } from './api.types';
 
 export interface CursorPage<T> { items: T[]; nextCursor?: string; total?: number }
 export interface IdempotentRequest { idempotencyKey: string }
@@ -29,7 +29,13 @@ abstract class EndpointApi {
 @Injectable({ providedIn: 'root' }) export class ContentReviewApiService extends EndpointApi { constructor() { super('/review'); } }
 @Injectable({ providedIn: 'root' }) export class AdminDashboardApiService extends EndpointApi { constructor() { super('/admin/dashboard'); } }
 @Injectable({ providedIn: 'root' }) export class AdminUserApiService extends EndpointApi { constructor() { super('/admin/users'); } users(params?: Record<string, string | number | boolean>) { return this.api.get<AdminUserListResponse | AdminUser[]>(this.root, params); } }
-@Injectable({ providedIn: 'root' }) export class AdminChallengeApiService extends EndpointApi { constructor() { super('/admin/challenges'); } }
+@Injectable({ providedIn: 'root' })
+export class AdminChallengeApiService extends EndpointApi {
+  constructor() { super('/admin/challenges'); }
+  challenges(params?: Record<string, string | number | boolean>) { return this.api.get<AdminChallengeListResponse | AdminChallenge[]>(this.root, params); }
+  publish(id: string) { return this.api.post<AdminChallenge>(`${this.root}/${encodeURIComponent(id)}/publish`, {}); }
+  archive(id: string) { return this.api.post<AdminChallenge>(`${this.root}/${encodeURIComponent(id)}/archive`, {}); }
+}
 @Injectable({ providedIn: 'root' }) export class AdminCohortApiService extends EndpointApi { constructor() { super('/admin/cohorts'); } }
 @Injectable({ providedIn: 'root' }) export class AdminEnrollmentApiService extends EndpointApi { constructor() { super('/admin/enrollments'); } assignLearningPacks(body: BulkLearningPackAssignmentRequest) { return this.api.post<LearningPackAssignmentResponse>(`${this.root}/learning-pack-assignments`, body); } }
 @Injectable({ providedIn: 'root' }) export class AdminTeamApiService extends EndpointApi { constructor() { super('/admin/teams'); } }
