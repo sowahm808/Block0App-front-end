@@ -91,10 +91,27 @@ export interface ReportFilter {
   status?: string;
 }
 export type ReportQueryParams = Record<string, string | number | boolean>;
-export interface ReportListResponse<T> { items?: T[]; data?: T[]; total?: number; nextCursor?: string; updatedAtUtc?: string; }
-export interface ReportOption { id: string; label: string; }
-export interface ReportTrendPoint { date: string; value: number; label?: string; }
-export interface ReportDistributionPoint { key: string; label: string; value: number; }
+export interface ReportListResponse<T> {
+  items?: T[];
+  data?: T[];
+  total?: number;
+  nextCursor?: string;
+  updatedAtUtc?: string;
+}
+export interface ReportOption {
+  id: string;
+  label: string;
+}
+export interface ReportTrendPoint {
+  date: string;
+  value: number;
+  label?: string;
+}
+export interface ReportDistributionPoint {
+  key: string;
+  label: string;
+  value: number;
+}
 export interface AdminReportOverview {
   activeScholarCount: number;
   activeCohortCount: number;
@@ -112,11 +129,72 @@ export interface AdminReportOverview {
   cohorts?: ReportOption[];
   updatedAtUtc?: string;
 }
-export interface ScholarReportRow { scholarId: string; displayName: string; email?: string; cohortName?: string; assignedPackCount: number; completedPackCount: number; completionRate?: number; averageAccuracy?: number; readinessBand?: string; overdueCount: number; lastActivityAtUtc?: string; riskLevel?: string; }
-export interface CohortReportRow { cohortId: string; cohortName: string; challengeTitle?: string; scholarCount: number; completionRate?: number; averageAccuracy?: number; readinessRate?: number; overdueCount: number; mentorNames?: string[]; lastActivityAtUtc?: string; healthStatus?: string; }
-export interface ChallengeReportRow { challengeId: string; title: string; status?: string; cohortCount: number; scholarCount: number; learningPackCount: number; completionRate?: number; averageAccuracy?: number; readinessRate?: number; startAtUtc?: string; endAtUtc?: string; }
-export interface LearningPackReportRow { learningPackId: string; code?: string; title: string; topic?: string; status?: string; assignedCount: number; startedCount: number; completedCount: number; completionRate?: number; averageAccuracy?: number; averageTimeMinutes?: number; overdueCount: number; }
-export interface QuestionReportRow { questionId: string; title: string; learningPackTitle?: string; capsuleId?: string; attemptCount: number; correctRate?: number; mostSelectedWrongChoice?: string; difficulty?: string; status?: string; reviewFlags?: string[]; }
+export interface ScholarReportRow {
+  scholarId: string;
+  displayName: string;
+  email?: string;
+  cohortName?: string;
+  assignedPackCount: number;
+  completedPackCount: number;
+  completionRate?: number;
+  averageAccuracy?: number;
+  readinessBand?: string;
+  overdueCount: number;
+  lastActivityAtUtc?: string;
+  riskLevel?: string;
+}
+export interface CohortReportRow {
+  cohortId: string;
+  cohortName: string;
+  challengeTitle?: string;
+  scholarCount: number;
+  completionRate?: number;
+  averageAccuracy?: number;
+  readinessRate?: number;
+  overdueCount: number;
+  mentorNames?: string[];
+  lastActivityAtUtc?: string;
+  healthStatus?: string;
+}
+export interface ChallengeReportRow {
+  challengeId: string;
+  title: string;
+  status?: string;
+  cohortCount: number;
+  scholarCount: number;
+  learningPackCount: number;
+  completionRate?: number;
+  averageAccuracy?: number;
+  readinessRate?: number;
+  startAtUtc?: string;
+  endAtUtc?: string;
+}
+export interface LearningPackReportRow {
+  learningPackId: string;
+  code?: string;
+  title: string;
+  topic?: string;
+  status?: string;
+  assignedCount: number;
+  startedCount: number;
+  completedCount: number;
+  completionRate?: number;
+  averageAccuracy?: number;
+  averageTimeMinutes?: number;
+  overdueCount: number;
+}
+export interface QuestionReportRow {
+  questionId: string;
+  title: string;
+  learningPackTitle?: string;
+  capsuleId?: string;
+  attemptCount: number;
+  correctRate?: number;
+  mostSelectedWrongChoice?: string;
+  difficulty?: string;
+  status?: string;
+  reviewFlags?: string[];
+}
 
 export interface ContentReviewChoice {
   id: string;
@@ -621,22 +699,97 @@ export interface SystemSettings {
   schemaVersion: number;
   updatedAtUtc?: string;
   updatedBy?: string;
-  general: { academyName: string; supportEmail: string; defaultTimezone: string; defaultLocale: string; maintenanceMode: boolean };
-  academy: { allowSelfRegistration: boolean; requireEmailVerification: boolean; defaultScholarRole: string; defaultMentorRole: string };
-  challenges: { defaultDurationDays: number; defaultStartHourLocal: string; allowOverlappingChallenges: boolean; requirePublishedLearningPacks: boolean; autoCompleteAfterEndDate: boolean };
-  learningPacks: { requireContentApprovalBeforePublish: boolean; allowDraftAssignment: boolean; defaultAvailability: string; defaultAccuracyVisibility: boolean; maxCapsulesPerPack: number; maxQuestionsPerCapsule: number };
-  enrollment: { defaultCapacity: number; requireApproval: boolean; allowCohortTransfer: boolean; allowMultipleActiveCohorts: boolean };
-  notifications: { emailEnabled: boolean; smsEnabled: boolean; inAppEnabled: boolean; assignmentReminderDaysBeforeDue: number; overdueReminderFrequencyDays: number };
-  security: { requireAdministrativeMfa: boolean; sessionTimeoutMinutes: number; maxFailedLoginAttempts: number; passwordResetExpiryMinutes: number; auditRetentionDays: number };
-  imports: { maxUploadSizeMb: number; allowedExtensions: string[]; extractionTimeoutSeconds: number; requireValidationBeforeCommit: boolean };
-  reports: { defaultDateRangeDays: number; maxExportRows: number; cacheMinutes: number };
-  integrations: { emailProviderEnabled: boolean; smsProviderEnabled: boolean; storageProvider: string; emailProviderStatus?: string; smsProviderStatus?: string };
-  maintenance: { readOnlyMode: boolean; bannerMessage: string; bannerSeverity: string; bannerStartsAtUtc?: string; bannerEndsAtUtc?: string };
-  environment?: { environmentName?: string; frontendVersion?: string; backendVersion?: string; buildTimestamp?: string; apiBaseUrl?: string; firebaseProjectId?: string; storageBucketId?: string; databaseStatus?: string };
+  general: {
+    applicationName: string;
+    supportEmail: string;
+    defaultLocale: string;
+    defaultTimezone: string;
+    dateFormat: string;
+  };
+  academy: {
+    academyName: string;
+    contactEmail: string;
+    academicYearStart: string;
+    defaultChallengeDurationDays: number;
+  };
+  challenges: {
+    defaultDurationDays: number;
+    allowLateCompletion: boolean;
+    requireDailyCheckIn: boolean;
+    maxActiveChallenges: number;
+  };
+  learningPacks: { requireReviewBeforePublish: boolean; allowSelfEnrollment: boolean; defaultEstimatedMinutes: number };
+  enrollment: {
+    registrationEnabled: boolean;
+    requireEmailVerification: boolean;
+    invitationExpiryDays: number;
+    maximumActiveEnrollments: number;
+  };
+  notifications: {
+    emailEnabled: boolean;
+    smsEnabled: boolean;
+    pushEnabled: boolean;
+    fromName: string;
+    replyToEmail: string;
+    digestTime: string;
+  };
+  security: {
+    sessionTimeoutMinutes: number;
+    passwordResetTimeoutMinutes: number;
+    maximumLoginAttempts: number;
+    auditRetentionDays: number;
+    requireMfaForAdministrators: boolean;
+  };
+  imports: { maximumUploadSizeMb: number; extractionTimeoutSeconds: number; allowedParserExtensions: string[] };
+  reports: {
+    maximumExportRows: number;
+    includePersonallyIdentifiableInformation: boolean;
+    scheduledReportsEnabled: boolean;
+  };
+  integrations: { providers: Record<string, { configured: boolean; healthy: boolean }> };
+  maintenance: {
+    enabled: boolean;
+    readOnly: boolean;
+    banner: string;
+    reason: string;
+    startsAtUtc: string | null;
+    endsAtUtc: string | null;
+  };
+  environment?: {
+    deploymentName?: string;
+    applicationVersion?: string;
+    apiBaseUrl?: string;
+    firebaseProjectId?: string;
+    firebaseStorageBucket?: string;
+  };
 }
 
-export interface SystemSettingsResponse { data?: SystemSettings; settings?: SystemSettings; usingDefaults?: boolean }
-export interface UpdateSystemSettingsRequest { version: number; settings: Omit<SystemSettings, 'version' | 'schemaVersion' | 'updatedAtUtc' | 'updatedBy' | 'environment'> }
-export interface SystemSettingsValidationResult { valid: boolean; errors?: Array<{ path: string; message: string }>; warnings?: string[] }
-export interface SystemSettingsHistoryItem { id: string; occurredAtUtc: string; administrator: string; category: string; changedFields: string[]; result: string }
-export interface SystemSettingsHistoryResponse { items: SystemSettingsHistoryItem[]; nextCursor?: string }
+export interface SystemSettingsResponse {
+  data?: SystemSettings;
+  settings?: SystemSettings;
+  usingDefaults?: boolean;
+}
+export interface UpdateSystemSettingsRequest {
+  version: number;
+  settings: Omit<
+    SystemSettings,
+    'version' | 'schemaVersion' | 'updatedAtUtc' | 'updatedBy' | 'environment' | 'integrations'
+  >;
+}
+export interface SystemSettingsValidationResult {
+  valid: boolean;
+  errors?: Array<{ path: string; message: string }>;
+  warnings?: string[];
+}
+export interface SystemSettingsHistoryItem {
+  id: string;
+  occurredAtUtc: string;
+  administrator: string;
+  category: string;
+  changedFields: string[];
+  result: string;
+}
+export interface SystemSettingsHistoryResponse {
+  items: SystemSettingsHistoryItem[];
+  nextCursor?: string;
+}
