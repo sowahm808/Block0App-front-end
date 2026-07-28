@@ -6,7 +6,7 @@ export const environment: Environment = {
   apiWithCredentials: false,
   appInsightsConnectionString: '',
   enableMockApi: false,
-  features: { encouragementCenter: false },
+  features: { encouragementCenter: true },
   firebase: {
     apiKey: 'AIzaSyB9647vJIAgOwFrqEEaI347xMLb6FZXTKg',
     authDomain: 'blockowhisper.firebaseapp.com',
