@@ -1,5 +1,5 @@
 @use '@angular/material' as mat;
-@include mat.core();
+
 $light-theme: mat.define-theme(
   (
     color: (
@@ -32,15 +32,18 @@ $dark-theme: mat.define-theme(
     ),
   )
 );
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@include mat.core();
+
 :root {
   @include mat.all-component-themes($light-theme);
 }
 .theme-dark {
   @include mat.all-component-colors($dark-theme);
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root,
 .theme-light {
@@ -644,4 +647,23 @@ a {
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'liga';
+}
+
+/*
+ * Angular Material MDC outlined fields use three outline pieces:
+ * leading, notch, and trailing.
+ *
+ * The notch must not have an inline-end border. Tailwind preflight can
+ * restore that border and create a vertical separator inside the field.
+ *
+ * Must remain after Angular Material and Tailwind-generated styles.
+ */
+.mat-mdc-form-field .mdc-notched-outline__notch {
+  border-right: 0 !important;
+}
+
+/* RTL equivalent */
+[dir='rtl'] .mat-mdc-form-field .mdc-notched-outline__notch {
+  border-right: initial !important;
+  border-left: 0 !important;
 }
