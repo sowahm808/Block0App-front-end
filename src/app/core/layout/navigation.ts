@@ -1,5 +1,6 @@
 import { AuthStore } from '../auth/auth.store';
 import { Permission, UserRole } from '../models/roles';
+import { environment } from '../../../environments/environment';
 
 export interface AppNavigationItem {
   route: string;
@@ -29,6 +30,18 @@ export const MENTOR_ROLES: UserRole[] = ['Mentor', 'Administrator', 'SuperAdmini
 export const ADMIN_ROLES: UserRole[] = ['Administrator', 'SuperAdministrator'];
 
 export const APP_NAVIGATION_GROUPS: readonly AppNavigationGroup[] = [
+  {
+    label: 'Encouragement',
+    permissions: ['whispers.access'],
+    items: [
+      {
+        route: '/encouragement',
+        label: 'Encouragement Center',
+        icon: 'volunteer_activism',
+        permissions: ['whispers.access'],
+      },
+    ],
+  },
   {
     label: 'Scholar',
     roles: SCHOLAR_ROLES,
@@ -191,6 +204,7 @@ export const APP_NAVIGATION: AppNavigationLink[] = APP_NAVIGATION_GROUPS.flatMap
 );
 
 export function canShowNavigationItem(store: AuthStore, item: AppNavigationItem | AppNavigationGroup): boolean {
+  if ('route' in item && item.route === '/encouragement' && !environment.features.encouragementCenter) return false;
   const user = store.user();
   if (!user) return false;
   const status = (user as { status?: string }).status;

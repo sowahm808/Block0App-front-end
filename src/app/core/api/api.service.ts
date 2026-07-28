@@ -27,6 +27,9 @@ export class ApiService {
   put<T>(path: string, body: unknown) {
     return this.#http.put<T>(`${this.#base}${path}`, body, { withCredentials: this.#withCredentials() });
   }
+  patch<T>(path: string, body: unknown) {
+    return this.#http.patch<T>(`${this.#base}${path}`, body, { withCredentials: this.#withCredentials() });
+  }
   delete<T>(path: string) {
     return this.#http.delete<T>(`${this.#base}${path}`, { withCredentials: this.#withCredentials() });
   }
