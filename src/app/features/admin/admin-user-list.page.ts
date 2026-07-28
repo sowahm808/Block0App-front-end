@@ -204,6 +204,8 @@ import { LearningPackAssignmentDialogComponent } from './learning-pack-assignmen
         background: var(--b0-surface-strong);
         border: 1px solid var(--b0-border);
         border-radius: var(--b0-radius-md);
+        container-name: users-filter-panel;
+        container-type: inline-size;
         margin: 1.5rem 0;
         padding: 1.25rem;
       }
@@ -215,6 +217,9 @@ import { LearningPackAssignmentDialogComponent } from './learning-pack-assignmen
         min-width: 0;
       }
       .users-filter-grid mat-form-field {
+        --mat-form-field-container-height: 56px;
+        --mat-form-field-container-vertical-padding: 16px;
+        --mat-form-field-outlined-container-shape: var(--b0-radius-sm);
         margin: 0;
         min-width: 0;
         width: 100%;
@@ -228,9 +233,12 @@ import { LearningPackAssignmentDialogComponent } from './learning-pack-assignmen
       }
       .assign-packs-button {
         border-radius: 999px;
-        min-height: 56px;
+        height: 56px;
         padding-inline: 1.25rem;
         white-space: nowrap;
+      }
+      .assign-packs-button mat-icon {
+        margin: 0 0.5rem 0 0;
       }
       .assign-packs-button:disabled {
         background: color-mix(in srgb, var(--b0-text-muted) 14%, var(--b0-surface-strong));
@@ -314,25 +322,26 @@ import { LearningPackAssignmentDialogComponent } from './learning-pack-assignmen
       .mat-column-actions {
         width: 3rem;
       }
-      @media (max-width: 1100px) {
+      @container users-filter-panel (max-width: 56rem) {
         .users-filter-grid {
-          grid-template-columns: minmax(18rem, 1fr) repeat(2, minmax(10rem, 0.5fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .users-search-field {
+          grid-column: 1 / -1;
         }
         .users-result-count {
           grid-column: 1;
         }
         .assign-packs-button {
-          grid-column: 2/4;
+          grid-column: 2;
           justify-self: end;
         }
       }
-      @media (max-width: 720px) {
-        .users-filter-panel {
-          padding: 1rem;
-        }
+      @container users-filter-panel (max-width: 36rem) {
         .users-filter-grid {
           grid-template-columns: 1fr;
         }
+        .users-search-field,
         .users-result-count,
         .assign-packs-button {
           grid-column: auto;
@@ -340,6 +349,11 @@ import { LearningPackAssignmentDialogComponent } from './learning-pack-assignmen
         .assign-packs-button {
           justify-self: stretch;
           width: 100%;
+        }
+      }
+      @media (max-width: 600px) {
+        .users-filter-panel {
+          padding: 1rem;
         }
       }
     `,
