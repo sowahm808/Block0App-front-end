@@ -12,7 +12,12 @@ import {
   SimpleAuthPage,
   VerifyEmailPage,
 } from './features/auth/auth.pages';
+import { environment } from '../environments/environment';
 export const routes: Routes = [
+  {
+    path: 'unwrap/:token',
+    loadComponent: () => import('./features/encouragement/pages/unwrap-whisper.page').then((m) => m.UnwrapWhisperPage),
+  },
   { path: '', pathMatch: 'full', component: LandingPage },
   { path: 'login', component: LoginPage, canActivate: [guestGuard] },
   { path: 'register', component: RegisterPage, canActivate: [guestGuard] },
@@ -69,6 +74,11 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [authGuard],
     children: [
+      {
+        path: 'encouragement',
+        canMatch: [() => environment.features.encouragementCenter],
+        loadChildren: () => import('./features/encouragement/encouragement.routes'),
+      },
       { path: 'dashboard', loadChildren: () => import('./features/dashboard/routes') },
       { path: 'challenge', loadChildren: () => import('./features/challenge/routes') },
       { path: 'learning-packs', loadChildren: () => import('./features/learning-packs/routes') },

@@ -76,10 +76,19 @@ export class AuthStore {
       case 'ContentReviewer':
         return ['content.read', 'content.review', 'content-review:access'];
       case 'Mentor':
-        return ['mentor.teams.read', 'mentor.support.read', 'mentor.progress.read', 'mentor:access'];
+        return [
+          'mentor.teams.read',
+          'mentor.support.read',
+          'mentor.progress.read',
+          'mentor:access',
+          'whispers.access',
+          'whispers.create',
+          'whispers.read_own',
+          'whispers.send_internal',
+          'whispers.send_external',
+        ];
       case 'Scholar':
-        return ['scholar:access'];
+        return ['scholar:access', 'whispers.access', 'whispers.create', 'whispers.read_own', 'whispers.send_internal'];
     }
   }
 }
-
